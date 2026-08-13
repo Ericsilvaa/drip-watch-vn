@@ -4,6 +4,11 @@
  * espalhado pelos componentes. Ajustar metas/limites é só editar este arquivo.
  */
 
+export const dashboardConfig = {
+  appName: 'Lavateria — Régua de Recompra',
+  appTagline: 'Monitor de disparos WhatsApp (piloto)',
+} as const
+
 export type PeriodoKey = 'hoje' | '7d' | '30d' | 'custom'
 
 export const PERIODOS: { key: PeriodoKey; label: string; dias: number | null }[] = [
