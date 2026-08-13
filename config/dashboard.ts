@@ -5,8 +5,9 @@
  */
 
 export const dashboardConfig = {
-  appName: 'Lavateria — Régua de Recompra',
-  appTagline: 'Monitor de disparos WhatsApp (piloto)',
+  appName: 'Painel de Disparos',
+  appBrand: 'Lavateria Fast',
+  appTagline: 'Monitoramento dos lembretes de recompra via WhatsApp',
 } as const
 
 export type PeriodoKey = 'hoje' | '7d' | '30d' | 'custom'
@@ -45,13 +46,11 @@ export const STATUS_ENVIO = {
 
 export type StatusEnvio = keyof typeof STATUS_ENVIO
 
-/**
- * URL pública do Form Trigger do workflow n8n `01-captura-importacao-clientes.json`.
- * NUNCA hardcode — muda entre fases de infra (túnel Tailscale local hoje, VPS no H12).
- * Definir em NEXT_PUBLIC_N8N_IMPORT_WEBHOOK_URL. Vazio => painel avisa que a importação
- * está indisponível, sem quebrar a tela.
- */
-export const N8N_IMPORT_WEBHOOK_URL =
-  process.env.NEXT_PUBLIC_N8N_IMPORT_WEBHOOK_URL ?? ''
+/** Extensões e tamanho máximo aceitos no upload de importação (validação no client). */
+export const IMPORT_EXTENSOES = ['.xlsx', '.xls', '.csv'] as const
+export const IMPORT_TAMANHO_MAX_MB = 10
+
+/** Endpoint interno (same-origin) que faz proxy do upload para o webhook do n8n. */
+export const IMPORT_API_ROUTE = '/api/importar-clientes'
 
 export const ITENS_POR_PAGINA = 10
