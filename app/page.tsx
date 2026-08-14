@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { sanitizePreferencias } from "@/config/dashboard"
 import { Dashboard } from "@/components/dashboard/dashboard"
 
 export default async function Page() {
@@ -12,5 +13,5 @@ export default async function Page() {
     redirect("/login")
   }
 
-  return <Dashboard email={user.email ?? ""} />
+  return <Dashboard preferencias={sanitizePreferencias(user.user_metadata?.preferencias)} />
 }
