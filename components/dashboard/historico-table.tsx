@@ -7,6 +7,7 @@ import { useHistoricoDisparos } from "@/hooks/use-historico-disparos"
 import { fmtDataHora, fmtNumero } from "@/lib/format"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { AsyncBoundary } from "@/components/dashboard/state"
+import { ExportCsvButton } from "@/components/dashboard/export-csv-button"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -32,17 +33,32 @@ export function HistoricoTable() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative max-w-xs">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={busca}
-          onChange={(e) => {
-            setBusca(e.target.value)
-            setPagina(1)
-          }}
-          placeholder="Buscar por cliente..."
-          className="pl-9"
-          aria-label="Buscar por cliente"
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="relative max-w-xs flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={busca}
+            onChange={(e) => {
+              setBusca(e.target.value)
+              setPagina(1)
+            }}
+            placeholder="Buscar por cliente..."
+            className="pl-9"
+            aria-label="Buscar por cliente"
+          />
+        </div>
+        <ExportCsvButton
+          secao="historico_disparos"
+          headers={["cliente", "unidade", "status", "detalhe_erro", "enviado_em", "total_disparos_cliente", "multi_unidade"]}
+          rows={linhas.map((l) => [
+            l.cliente_nome,
+            l.unidade_nome,
+            l.status,
+            l.detalhe_erro ?? "",
+            fmtDataHora(l.enviado_em),
+            l.total_disparos_cliente,
+            l.multi_unidade ? "sim" : "não",
+          ])}
         />
       </div>
 

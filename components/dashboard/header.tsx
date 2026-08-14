@@ -13,6 +13,7 @@ export function Header({ email }: { email: string }) {
           <div className="leading-tight">
             <p className="text-sm font-semibold tracking-tight text-foreground">
               {dashboardConfig.appName}
+              <span className="font-normal text-muted-foreground"> — {dashboardConfig.appBrand}</span>
             </p>
             <p className="hidden text-xs text-muted-foreground sm:block">
               {dashboardConfig.appTagline}

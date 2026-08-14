@@ -10,9 +10,8 @@ export interface Cliente {
   id: string
   unidade_id: string
   nome: string
+  /** Usado só internamente (marcação multi-unidade) — nunca exibido na UI. */
   cpf: string | null
-  telefone_e164: string | null
-  email: string | null
   ultima_compra: string | null
   qtd_compras: number
   valor_total: number

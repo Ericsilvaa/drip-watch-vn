@@ -6,6 +6,7 @@ import { useEnviosRecentes } from "@/hooks/use-envios-recentes"
 import { fmtDataHora } from "@/lib/format"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { AsyncBoundary } from "@/components/dashboard/state"
+import { ExportCsvButton } from "@/components/dashboard/export-csv-button"
 import {
   Table,
   TableBody,
@@ -32,21 +33,28 @@ export function RecentTable() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-muted p-0.5">
-        {filtros.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            onClick={() => setFiltro(f.key)}
-            aria-pressed={filtro === f.key}
-            className={cn(
-              "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              filtro === f.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-muted p-0.5">
+          {filtros.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFiltro(f.key)}
+              aria-pressed={filtro === f.key}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                filtro === f.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <ExportCsvButton
+          secao="envios_recentes"
+          headers={["cliente", "unidade", "status", "detalhe_erro", "enviado_em"]}
+          rows={visiveis.map((e) => [e.cliente_nome, e.unidade_nome, e.status, e.detalhe_erro ?? "", fmtDataHora(e.enviado_em)])}
+        />
       </div>
 
       <AsyncBoundary
