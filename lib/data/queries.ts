@@ -24,10 +24,14 @@ export async function fetchUnidades(): Promise<Unidade[]> {
 
 export async function fetchClientes(): Promise<Cliente[]> {
   const supabase = createClient()
+  // telefone_e164/email não entram no select: nenhum componente do painel
+  // exibe esses campos, então não há razão pra baixar esse PII pro browser.
+  // cpf continua — é usado (só internamente, nunca exibido) pra identificar
+  // o mesmo cliente cadastrado nas duas unidades (marcação "multi-unidade").
   const { data, error } = await supabase
     .from('clientes')
     .select(
-      'id, unidade_id, nome, cpf, telefone_e164, email, ultima_compra, qtd_compras, valor_total, opt_out, opt_out_em, grupo_teste',
+      'id, unidade_id, nome, cpf, ultima_compra, qtd_compras, valor_total, opt_out, opt_out_em, grupo_teste',
     )
   return assertNoError<Cliente[]>(data as Cliente[], error)
 }

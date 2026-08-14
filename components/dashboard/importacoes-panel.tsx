@@ -4,6 +4,8 @@ import { FileSpreadsheet } from "lucide-react"
 import { useDatasets } from "@/hooks/use-datasets"
 import { fmtDataHora, fmtNumero } from "@/lib/format"
 import { AsyncBoundary } from "@/components/dashboard/state"
+import { ExportCsvButton } from "@/components/dashboard/export-csv-button"
+import { NovaImportacaoForm } from "@/components/dashboard/nova-importacao-form"
 
 export function ImportacoesPanel() {
   const { importacoes, unidades, isLoading, error } = useDatasets()
@@ -13,14 +15,32 @@ export function ImportacoesPanel() {
     .slice(0, 5)
 
   return (
-    <AsyncBoundary
-      isLoading={isLoading}
-      error={error}
-      isEmpty={recentes.length === 0}
-      emptyMessage="Nenhuma importação registrada."
-      loadingClassName="h-[220px]"
-    >
-      <ul className="flex flex-col divide-y divide-border">
+    <div className="flex flex-col">
+      <NovaImportacaoForm />
+
+      <div className="mb-2 flex justify-end">
+        <ExportCsvButton
+          secao="importacoes"
+          headers={["arquivo", "unidade", "linhas_lidas", "linhas_validas", "linhas_rejeitadas", "data"]}
+          rows={importacoes.map((imp) => [
+            imp.arquivo,
+            unidadeNome(imp.unidade_id),
+            imp.linhas_lidas,
+            imp.linhas_validas,
+            imp.linhas_rejeitadas,
+            fmtDataHora(imp.importado_em),
+          ])}
+        />
+      </div>
+
+      <AsyncBoundary
+        isLoading={isLoading}
+        error={error}
+        isEmpty={recentes.length === 0}
+        emptyMessage="Nenhuma importação registrada."
+        loadingClassName="h-[220px]"
+      >
+        <ul className="flex flex-col divide-y divide-border">
         {recentes.map((imp) => {
           const rejeitou = imp.linhas_rejeitadas > 0
           return (
@@ -45,7 +65,8 @@ export function ImportacoesPanel() {
             </li>
           )
         })}
-      </ul>
-    </AsyncBoundary>
+        </ul>
+      </AsyncBoundary>
+    </div>
   )
 }
