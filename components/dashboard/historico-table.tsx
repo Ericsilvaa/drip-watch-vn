@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Search, Users } from "lucide-react"
-import { ITENS_POR_PAGINA } from "@/config/dashboard"
+import { useDashboardFilters } from "@/hooks/use-dashboard-filters"
 import { useHistoricoDisparos } from "@/hooks/use-historico-disparos"
 import { fmtDataHora, fmtNumero } from "@/lib/format"
 import { StatusBadge } from "@/components/dashboard/status-badge"
@@ -22,13 +22,14 @@ import {
 export function HistoricoTable() {
   const [busca, setBusca] = useState("")
   const [pagina, setPagina] = useState(1)
+  const { itensPorPagina } = useDashboardFilters()
   const { linhas, isLoading, error } = useHistoricoDisparos(busca)
 
-  const totalPaginas = Math.max(1, Math.ceil(linhas.length / ITENS_POR_PAGINA))
+  const totalPaginas = Math.max(1, Math.ceil(linhas.length / itensPorPagina))
   const paginaAtual = Math.min(pagina, totalPaginas)
   const visiveis = useMemo(
-    () => linhas.slice((paginaAtual - 1) * ITENS_POR_PAGINA, paginaAtual * ITENS_POR_PAGINA),
-    [linhas, paginaAtual],
+    () => linhas.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina),
+    [linhas, paginaAtual, itensPorPagina],
   )
 
   return (

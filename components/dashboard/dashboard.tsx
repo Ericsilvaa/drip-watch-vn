@@ -1,5 +1,6 @@
 "use client"
 
+import type { PreferenciasPainel } from "@/config/dashboard"
 import { DashboardFiltersProvider } from "@/hooks/use-dashboard-filters"
 import { Header } from "@/components/dashboard/header"
 import { FilterBar } from "@/components/dashboard/filter-bar"
@@ -13,11 +14,11 @@ import { RecentTable } from "@/components/dashboard/recent-table"
 import { HistoricoTable } from "@/components/dashboard/historico-table"
 import { ImportacoesPanel } from "@/components/dashboard/importacoes-panel"
 
-export function Dashboard({ email }: { email: string }) {
+export function Dashboard({ preferencias }: { preferencias: PreferenciasPainel }) {
   return (
-    <DashboardFiltersProvider>
+    <DashboardFiltersProvider preferencias={preferencias}>
       <div className="min-h-svh bg-background">
-        <Header email={email} />
+        <Header />
 
         <main className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 lg:px-6">
           <div className="flex flex-col gap-1">

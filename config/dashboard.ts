@@ -54,3 +54,51 @@ export const IMPORT_TAMANHO_MAX_MB = 10
 export const IMPORT_API_ROUTE = '/api/importar-clientes'
 
 export const ITENS_POR_PAGINA = 10
+
+/** Opções de itens por página oferecidas em Preferências. */
+export const ITENS_POR_PAGINA_OPCOES = [10, 25, 50] as const
+
+/** Períodos oferecidos como "período padrão ao abrir" — exclui 'custom', que depende de um intervalo já escolhido. */
+export const PERIODOS_PADRAO_SELECIONAVEIS = PERIODOS.filter((p) => p.key !== 'custom')
+
+export interface PreferenciasPainel {
+  unidadePadrao: UnidadeSlug
+  periodoPadrao: PeriodoKey
+  incluirGrupoTestePadrao: boolean
+  itensPorPagina: number
+}
+
+export const PREFERENCIAS_PADRAO: PreferenciasPainel = {
+  unidadePadrao: 'todas',
+  periodoPadrao: PERIODO_PADRAO,
+  incluirGrupoTestePadrao: false,
+  itensPorPagina: ITENS_POR_PAGINA,
+}
+
+/**
+ * Preferências vêm de user_metadata (Supabase Auth) — mesmo caminho já usado
+ * pro nome de exibição, fora das tabelas de negócio e da política RLS
+ * deny-all. Sanitiza valores desconhecidos/antigos caindo no padrão.
+ */
+export function sanitizePreferencias(valor: unknown): PreferenciasPainel {
+  const obj = (valor ?? {}) as Partial<PreferenciasPainel>
+
+  const unidadePadrao = UNIDADES.some((u) => u.slug === obj.unidadePadrao)
+    ? (obj.unidadePadrao as UnidadeSlug)
+    : PREFERENCIAS_PADRAO.unidadePadrao
+
+  const periodoPadrao = PERIODOS_PADRAO_SELECIONAVEIS.some((p) => p.key === obj.periodoPadrao)
+    ? (obj.periodoPadrao as PeriodoKey)
+    : PREFERENCIAS_PADRAO.periodoPadrao
+
+  const incluirGrupoTestePadrao =
+    typeof obj.incluirGrupoTestePadrao === 'boolean'
+      ? obj.incluirGrupoTestePadrao
+      : PREFERENCIAS_PADRAO.incluirGrupoTestePadrao
+
+  const itensPorPagina = (ITENS_POR_PAGINA_OPCOES as readonly number[]).includes(obj.itensPorPagina as number)
+    ? (obj.itensPorPagina as number)
+    : PREFERENCIAS_PADRAO.itensPorPagina
+
+  return { unidadePadrao, periodoPadrao, incluirGrupoTestePadrao, itensPorPagina }
+}
