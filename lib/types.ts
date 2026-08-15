@@ -54,3 +54,20 @@ export interface LinhaHistorico extends EnvioDetalhado {
   total_disparos_cliente: number
   multi_unidade: boolean
 }
+
+/** Linha de disparos_agendados — um lembrete configurável (Configuração de Disparos). */
+export interface Lembrete {
+  id: string
+  nome: string
+  unidade_id: string | null
+  horario: string
+  dias_semana: number[]
+  dias_apos_compra: number
+  ativo: boolean
+  mensagem_template: string | null
+  imagem_url: string | null
+  quantidade_max: number | null
+  criado_em: string
+  atualizado_em: string
+}
+

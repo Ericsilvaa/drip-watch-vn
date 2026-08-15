@@ -124,6 +124,7 @@ export function HistoricoTable() {
             <Button
               variant="outline"
               size="sm"
+              className="rounded-full"
               onClick={() => setPagina((p) => Math.max(1, p - 1))}
               disabled={paginaAtual <= 1}
             >
@@ -132,6 +133,7 @@ export function HistoricoTable() {
             <Button
               variant="outline"
               size="sm"
+              className="rounded-full"
               onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
               disabled={paginaAtual >= totalPaginas}
             >

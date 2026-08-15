@@ -15,6 +15,19 @@ export interface Kpi {
   /** série de 7 dias para o mini-gráfico de tendência */
   trend: number[]
   tone: 'default' | 'success' | 'error' | 'neutral'
+  /**
+   * Variação percentual vs. período imediatamente anterior, de mesma duração
+   * (ex.: 7d selecionados -> compara com os 7 dias anteriores). `null` quando
+   * a base anterior é zero (comparação não faz sentido) ou o KPI é um
+   * snapshot não comparável por período (ex.: base de clientes, elegíveis hoje).
+   */
+  deltaPercent?: number | null
+}
+
+/** % de variação entre dois valores. `null` quando a base anterior é zero. */
+function pctDelta(atual: number, anterior: number): number | null {
+  if (anterior === 0) return null
+  return ((atual - anterior) / anterior) * 100
 }
 
 export function useKPIs() {
@@ -31,6 +44,20 @@ export function useKPIs() {
       incluirGrupoTeste,
     })
     const c = contarStatus(noPeriodo)
+
+    // Janela anterior, mesma duração, imediatamente antes do período selecionado —
+    // só pra render de "vs. período anterior" nos cards, sem tocar no cálculo dos KPIs em si.
+    const duracaoMs = fimPeriodo.getTime() - inicioPeriodo.getTime()
+    const inicioAnterior = new Date(inicioPeriodo.getTime() - duracaoMs)
+    const fimAnterior = new Date(inicioPeriodo.getTime() - 1)
+    const cAnterior = contarStatus(
+      filtrarEnvios(enviosDetalhados, {
+        inicio: inicioAnterior,
+        fim: fimAnterior,
+        unidadeId,
+        incluirGrupoTeste,
+      }),
+    )
 
     const dias = ultimosNDias(7)
     const serie = (pred: (s: string) => boolean) =>
@@ -90,6 +117,7 @@ export function useKPIs() {
         apoio: `${c.tentativas} tentativas de entrega`,
         trend: serie(() => true),
         tone: 'default',
+        deltaPercent: pctDelta(c.total, cAnterior.total),
       },
       {
         id: 'entregues',
@@ -100,6 +128,7 @@ export function useKPIs() {
           : 'Sem tentativas no período',
         trend: serie((s) => s === 'enviado'),
         tone: 'success',
+        deltaPercent: pctDelta(c.enviado, cAnterior.enviado),
       },
       {
         id: 'falhas',
@@ -109,6 +138,7 @@ export function useKPIs() {
         alerta: c.taxaErro > LIMITE_ALERTA_ERRO,
         trend: serie((s) => s === 'erro'),
         tone: 'error',
+        deltaPercent: pctDelta(c.erro, cAnterior.erro),
       },
       {
         id: 'base',
@@ -128,6 +158,7 @@ export function useKPIs() {
         apoio: `${c.opt_out} bloqueados no disparo`,
         trend: serie((s) => s === 'opt_out_bloqueado'),
         tone: 'neutral',
+        deltaPercent: pctDelta(c.opt_out, cAnterior.opt_out),
       },
       {
         id: 'elegiveis',

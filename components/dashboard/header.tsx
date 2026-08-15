@@ -33,7 +33,7 @@ function WhatsappStatusIndicator() {
       href="/configuracoes"
       title={label}
       aria-label={label}
-      className={cn("flex size-7 items-center justify-center rounded-lg transition-opacity hover:opacity-80", toneClass[tone])}
+      className={cn("flex size-8 items-center justify-center rounded-full transition-opacity hover:opacity-80", toneClass[tone])}
     >
       <Smartphone className="size-4" />
     </Link>
@@ -45,8 +45,20 @@ export function Header() {
   const emConfiguracoes = pathname?.startsWith("/configuracoes")
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-6">
+    <header className="sticky top-0 z-20 overflow-hidden border-b border-border bg-card/90 backdrop-blur">
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <span className="animate-bubble absolute top-1 left-[18%] size-2 rounded-full bg-primary/25" />
+        <span
+          className="animate-bubble absolute top-4 left-[42%] size-1.5 rounded-full bg-brand-accent/30"
+          style={{ animationDelay: "1.4s" }}
+        />
+        <span
+          className="animate-bubble absolute top-0 left-[76%] size-2.5 rounded-full bg-primary/15"
+          style={{ animationDelay: "2.8s" }}
+        />
+      </div>
+
+      <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-6">
         <Link href="/" className="flex items-center gap-3">
           <Logo className="size-9 rounded-lg" />
           <div className="leading-tight">
@@ -68,14 +80,17 @@ export function Header() {
             size="icon-sm"
             nativeButton={false}
             aria-label="Configurações"
-            className={cn(emConfiguracoes && "bg-accent text-accent-foreground")}
+            className={cn(
+              "rounded-full",
+              emConfiguracoes ? "bg-primary text-primary-foreground hover:bg-primary/90" : undefined,
+            )}
             render={<Link href="/configuracoes" aria-current={emConfiguracoes ? "page" : undefined} />}
           >
             <Settings className="size-4" />
           </Button>
 
           <form action={signOutAction}>
-            <Button type="submit" variant="ghost" size="sm" className="gap-1.5">
+            <Button type="submit" variant="ghost" size="sm" className="gap-1.5 rounded-full">
               <LogOut className="size-4" />
               <span className="hidden sm:inline">Sair</span>
             </Button>

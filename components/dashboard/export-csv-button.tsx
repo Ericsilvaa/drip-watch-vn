@@ -22,7 +22,7 @@ export function ExportCsvButton({
       type="button"
       variant="outline"
       size="sm"
-      className="gap-1.5 bg-highlight-bg text-primary hover:bg-highlight-bg/70"
+      className="gap-1.5 rounded-full bg-highlight-bg text-primary hover:bg-highlight-bg/70"
       disabled={disabled || rows.length === 0}
       onClick={() => {
         const filename = csvFilename(secao)

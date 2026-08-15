@@ -89,7 +89,7 @@ export function NovaImportacaoForm() {
   }
 
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-lg border border-highlight-bg bg-highlight-bg/40 p-3">
+    <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-highlight-bg bg-highlight-bg/40 p-3">
       <div className="flex flex-col gap-1">
         <p className="text-sm font-semibold text-foreground">Nova importação</p>
         <p className="text-xs text-muted-foreground text-pretty">
@@ -158,7 +158,7 @@ export function NovaImportacaoForm() {
           size="sm"
           disabled={!arquivo || !unidade || enviando}
           onClick={handleSubmit}
-          className="gap-1.5"
+          className="gap-1.5 rounded-full"
         >
           {enviando ? <Loader2 className="size-3.5 animate-spin" /> : null}
           Enviar
