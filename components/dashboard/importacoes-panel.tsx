@@ -45,7 +45,7 @@ export function ImportacoesPanel() {
           const rejeitou = imp.linhas_rejeitadas > 0
           return (
             <li key={imp.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
                 <FileSpreadsheet className="size-4" />
               </div>
               <div className="min-w-0 flex-1">

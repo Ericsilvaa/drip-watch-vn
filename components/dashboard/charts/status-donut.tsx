@@ -59,7 +59,7 @@ export function StatusDonut() {
 
         <div className="grid w-full grid-cols-2 gap-2">
           {fatias.map((f) => (
-            <div key={f.chave} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
+            <div key={f.chave} className="flex items-center gap-2 rounded-full bg-muted px-3 py-2">
               <span className="size-2.5 rounded-full" style={{ backgroundColor: f.cor }} aria-hidden="true" />
               <div className="min-w-0 leading-tight">
                 <p className="truncate text-xs text-muted-foreground">{f.label}</p>

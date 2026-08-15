@@ -13,5 +13,10 @@ export default async function Page() {
     redirect("/login")
   }
 
-  return <Dashboard preferencias={sanitizePreferencias(user.user_metadata?.preferencias)} />
+  return (
+    <Dashboard
+      preferencias={sanitizePreferencias(user.user_metadata?.preferencias)}
+      fullName={(user.user_metadata?.full_name as string | undefined) ?? ""}
+    />
+  )
 }

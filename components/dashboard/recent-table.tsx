@@ -34,7 +34,7 @@ export function RecentTable() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-muted p-0.5">
+        <div className="inline-flex flex-wrap items-center gap-1 rounded-full bg-muted p-0.5">
           {filtros.map((f) => (
             <button
               key={f.key}
@@ -42,7 +42,7 @@ export function RecentTable() {
               onClick={() => setFiltro(f.key)}
               aria-pressed={filtro === f.key}
               className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                 filtro === f.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
               )}
             >
