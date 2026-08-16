@@ -12,12 +12,11 @@ import { useInstanciaStatus } from "@/hooks/use-instancia-status"
 import { cn } from "@/lib/utils"
 
 function WhatsappStatusIndicator() {
-  const cambeba = useInstanciaStatus("cambeba", false)
-  const guararapes = useInstanciaStatus("guararapes", false)
+  const { data } = useInstanciaStatus(false)
 
-  const carregando = !cambeba.data || !guararapes.data
-  const conectado = cambeba.data?.state === "open" && guararapes.data?.state === "open"
-  const desconectado = cambeba.data?.state === "close" || guararapes.data?.state === "close"
+  const carregando = !data
+  const conectado = data?.state === "open"
+  const desconectado = data?.state === "close"
 
   const tone = carregando ? "neutral" : conectado ? "success" : desconectado ? "error" : "neutral"
   const label = carregando

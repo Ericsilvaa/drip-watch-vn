@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { toneClass } from "@/components/dashboard/status-badge"
+import { useInstanciaStatus } from "@/hooks/use-instancia-status"
 import { LEMBRETES_API_ROUTE, DIAS_SEMANA_OPCOES } from "@/config/lembretes"
 import { fmtProximoDisparo } from "@/lib/lembrete-preview"
 import { fmtDataHora } from "@/lib/format"
@@ -44,8 +45,13 @@ export function LembreteLinha({
   const [duplicando, setDuplicando] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false)
+  const { data: whatsapp } = useInstanciaStatus(false)
 
   async function alternarAtivo(novoValor: boolean) {
+    if (novoValor && whatsapp?.state !== "open") {
+      toast.error("WhatsApp desconectado — conecte em Configurações antes de ativar este lembrete.")
+      return
+    }
     setAlternandoAtivo(true)
     try {
       const resposta = await fetch(`${LEMBRETES_API_ROUTE}/${lembrete.id}`, {

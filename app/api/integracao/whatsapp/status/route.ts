@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { WHATSAPP_INSTANCIAS, type WhatsappUnidadeSlug } from "@/config/integracao"
+import { WHATSAPP_INSTANCIA } from "@/config/integracao"
 
 /**
  * Proxy same-origin para GET /instance/connectionState/{instancia} na
@@ -9,11 +9,7 @@ import { WHATSAPP_INSTANCIAS, type WhatsappUnidadeSlug } from "@/config/integrac
  */
 export const runtime = "nodejs"
 
-function unidadeValida(valor: string | null): valor is WhatsappUnidadeSlug {
-  return !!valor && valor in WHATSAPP_INSTANCIAS
-}
-
-export async function GET(request: Request) {
+export async function GET() {
   const apiUrl = process.env.EVOLUTION_API_URL
   const apiKey = process.env.EVOLUTION_API_KEY
 
@@ -24,23 +20,20 @@ export async function GET(request: Request) {
     )
   }
 
-  const { searchParams } = new URL(request.url)
-  const unidade = searchParams.get("unidade")
-
-  if (!unidadeValida(unidade)) {
-    return NextResponse.json({ error: "Unidade inválida." }, { status: 400 })
-  }
-
-  const instancia = WHATSAPP_INSTANCIAS[unidade]
-
   let resposta: Response
   try {
-    resposta = await fetch(`${apiUrl}/instance/connectionState/${instancia}`, {
+    resposta = await fetch(`${apiUrl}/instance/connectionState/${WHATSAPP_INSTANCIA}`, {
       headers: { apikey: apiKey },
       cache: "no-store",
     })
   } catch {
     return NextResponse.json({ error: "Não foi possível conectar à Evolution API." }, { status: 502 })
+  }
+
+  // Instância ainda não existe (nunca foi criada) — estado "close" é o
+  // correto pro dash mostrar "Conectar", que vai criar a instância na hora.
+  if (resposta.status === 404) {
+    return NextResponse.json({ state: "close" })
   }
 
   if (!resposta.ok) {

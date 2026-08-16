@@ -4,13 +4,13 @@
  * espírito de config/dashboard.ts — nunca hardcoded dentro dos componentes.
  */
 
-/** Nome da instância na Evolution API por unidade. Não cria/renomeia instância — só referencia as já existentes. */
-export const WHATSAPP_INSTANCIAS = {
-  cambeba: 'lavateria-cambeba',
-  guararapes: 'lavateria-guararapes',
-} as const
-
-export type WhatsappUnidadeSlug = keyof typeof WHATSAPP_INSTANCIAS
+/**
+ * Uma instância só atende as duas unidades (decisão final registrada em
+ * docs/prd/EPICO_MVP.md — "lavateria-guararapes" chegou a ser criada mas
+ * nunca foi pareada). O dash não gerencia nem expõe nenhuma outra
+ * instância da Evolution API (ex: instâncias de teste) — só esta.
+ */
+export const WHATSAPP_INSTANCIA = 'lavateria-cambeba'
 
 export const WHATSAPP_STATUS_API_ROUTE = '/api/integracao/whatsapp/status'
 export const WHATSAPP_CONECTAR_API_ROUTE = '/api/integracao/whatsapp/conectar'

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { WHATSAPP_INSTANCIAS, type WhatsappUnidadeSlug } from "@/config/integracao"
+import { WHATSAPP_INSTANCIA } from "@/config/integracao"
 
 /**
  * Proxy same-origin para DELETE /instance/logout/{instancia} na Evolution
@@ -10,11 +10,7 @@ import { WHATSAPP_INSTANCIAS, type WhatsappUnidadeSlug } from "@/config/integrac
  */
 export const runtime = "nodejs"
 
-function unidadeValida(valor: unknown): valor is WhatsappUnidadeSlug {
-  return typeof valor === "string" && valor in WHATSAPP_INSTANCIAS
-}
-
-export async function POST(request: Request) {
+export async function POST() {
   const apiUrl = process.env.EVOLUTION_API_URL
   const apiKey = process.env.EVOLUTION_API_KEY
 
@@ -25,24 +21,9 @@ export async function POST(request: Request) {
     )
   }
 
-  let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json({ error: "Corpo inválido." }, { status: 400 })
-  }
-
-  const unidade = (body as { unidade?: unknown } | null)?.unidade
-
-  if (!unidadeValida(unidade)) {
-    return NextResponse.json({ error: "Unidade inválida." }, { status: 400 })
-  }
-
-  const instancia = WHATSAPP_INSTANCIAS[unidade]
-
   let resposta: Response
   try {
-    resposta = await fetch(`${apiUrl}/instance/logout/${instancia}`, {
+    resposta = await fetch(`${apiUrl}/instance/logout/${WHATSAPP_INSTANCIA}`, {
       method: "DELETE",
       headers: { apikey: apiKey },
       cache: "no-store",

@@ -24,7 +24,6 @@ import {
   WHATSAPP_DESCONECTAR_API_ROUTE,
   WHATSAPP_QR_TIMEOUT_MS,
   WHATSAPP_STATUS_API_ROUTE,
-  type WhatsappUnidadeSlug,
 } from "@/config/integracao"
 import { cn } from "@/lib/utils"
 
@@ -58,13 +57,7 @@ export function ConnectionBadge({ state }: { state: WhatsappState }) {
   )
 }
 
-export function WhatsappUnidadeRow({
-  unidadeSlug,
-  unidadeNomeCurto,
-}: {
-  unidadeSlug: WhatsappUnidadeSlug
-  unidadeNomeCurto: string
-}) {
+export function WhatsappConexaoRow() {
   const [expandido, setExpandido] = useState(false)
   const [carregandoQr, setCarregandoQr] = useState(false)
   const [qr, setQr] = useState<QrData | null>(null)
@@ -73,8 +66,7 @@ export function WhatsappUnidadeRow({
   const [desconectando, setDesconectando] = useState(false)
   const expiraTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const statusKey = `${WHATSAPP_STATUS_API_ROUTE}?unidade=${unidadeSlug}`
-  const { data } = useInstanciaStatus(unidadeSlug, expandido)
+  const { data } = useInstanciaStatus(expandido)
   const state = data?.state ?? "unknown"
 
   useEffect(() => {
@@ -85,13 +77,13 @@ export function WhatsappUnidadeRow({
 
   useEffect(() => {
     if (expandido && data?.state === "open") {
-      toast.success(`WhatsApp da unidade ${unidadeNomeCurto} conectado.`)
+      toast.success("WhatsApp conectado.")
       if (expiraTimeoutRef.current) clearTimeout(expiraTimeoutRef.current)
       setExpandido(false)
       setQr(null)
       setExpirado(false)
     }
-  }, [data?.state, expandido, unidadeNomeCurto])
+  }, [data?.state, expandido])
 
   async function iniciarConexao() {
     setExpandido(true)
@@ -101,11 +93,7 @@ export function WhatsappUnidadeRow({
     if (expiraTimeoutRef.current) clearTimeout(expiraTimeoutRef.current)
 
     try {
-      const resposta = await fetch(WHATSAPP_CONECTAR_API_ROUTE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ unidade: unidadeSlug }),
-      })
+      const resposta = await fetch(WHATSAPP_CONECTAR_API_ROUTE, { method: "POST" })
       const resultado = await resposta.json().catch(() => ({}))
 
       if (!resposta.ok) {
@@ -127,11 +115,7 @@ export function WhatsappUnidadeRow({
   async function desconectar() {
     setDesconectando(true)
     try {
-      const resposta = await fetch(WHATSAPP_DESCONECTAR_API_ROUTE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ unidade: unidadeSlug }),
-      })
+      const resposta = await fetch(WHATSAPP_DESCONECTAR_API_ROUTE, { method: "POST" })
       const resultado = await resposta.json().catch(() => ({}))
 
       if (!resposta.ok) {
@@ -139,9 +123,9 @@ export function WhatsappUnidadeRow({
         return
       }
 
-      toast.success(`WhatsApp da unidade ${unidadeNomeCurto} desconectado.`)
+      toast.success("WhatsApp desconectado.")
       setConfirmandoDesconexao(false)
-      mutate(statusKey)
+      mutate(WHATSAPP_STATUS_API_ROUTE)
     } catch {
       toast.error("Não foi possível desconectar. Verifique sua internet e tente de novo.")
     } finally {
@@ -152,9 +136,9 @@ export function WhatsappUnidadeRow({
   const botaoLabel = state === "close" ? "Reconectar" : "Conectar"
 
   return (
-    <div className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-foreground">{unidadeNomeCurto}</span>
+        <span className="text-sm font-medium text-foreground">Lavateria Fast</span>
 
         <div className="flex items-center gap-2">
           <ConnectionBadge state={state} />
@@ -167,10 +151,10 @@ export function WhatsappUnidadeRow({
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Desconectar WhatsApp — {unidadeNomeCurto}?</AlertDialogTitle>
+                    <AlertDialogTitle>Desconectar WhatsApp?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      A unidade para de enviar lembretes por WhatsApp até que alguém escaneie um novo QR Code para
-                      reconectar.
+                      As duas unidades param de enviar lembretes por WhatsApp até que alguém escaneie um novo QR Code
+                      para reconectar.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -217,7 +201,7 @@ export function WhatsappUnidadeRow({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={qr.qrcodeBase64}
-              alt={`QR Code para conectar o WhatsApp da unidade ${unidadeNomeCurto}`}
+              alt="QR Code para conectar o WhatsApp da Lavateria Fast"
               className="size-44 rounded-lg border border-border bg-white p-2"
             />
           ) : null}
@@ -227,11 +211,6 @@ export function WhatsappUnidadeRow({
               <p>
                 Abra o WhatsApp no <strong className="text-foreground">único celular da Lavateria Fast</strong>{" "}
                 (mesmo número das duas unidades) → Aparelhos conectados → Conectar um aparelho.
-              </p>
-              <p className="mt-1.5 text-status-error">
-                Atenção: isso cria mais uma sessão do mesmo número em "Aparelhos conectados" — uma por unidade. Não
-                é um celular separado para {unidadeNomeCurto}: é o mesmo aparelho, pareado de novo para esta
-                unidade.
               </p>
             </div>
           ) : null}
