@@ -38,18 +38,14 @@ function Linha({
 }
 
 export function StatusHighlightCard() {
-  const cambeba = useInstanciaStatus("cambeba", false)
-  const guararapes = useInstanciaStatus("guararapes", false)
+  const { data: whatsapp } = useInstanciaStatus(false)
   const { kpis, isLoading } = useKPIs()
 
   const falhas = kpis.find((k) => k.id === "falhas")
   const elegiveis = kpis.find((k) => k.id === "elegiveis")
 
-  const desconectadas = [
-    cambeba.data?.state === "close" ? "Cambeba" : null,
-    guararapes.data?.state === "close" ? "Guararapes" : null,
-  ].filter(Boolean) as string[]
-  const aindaVerificando = !cambeba.data || !guararapes.data
+  const desconectado = whatsapp?.state === "close"
+  const aindaVerificando = !whatsapp
 
   return (
     <div className="card-elevated relative flex flex-col justify-between gap-4 overflow-hidden rounded-2xl bg-primary p-5 text-white">
@@ -76,13 +72,13 @@ export function StatusHighlightCard() {
           <p className="text-sm text-white/80">Verificando integrações…</p>
         ) : (
           <>
-            {desconectadas.length === 0 ? (
+            {!desconectado ? (
               <Linha icon={CheckCircle2} tone="ok">
-                WhatsApp conectado nas duas unidades.
+                WhatsApp conectado.
               </Linha>
             ) : (
               <Linha icon={AlertTriangle} tone="alerta">
-                WhatsApp desconectado em {desconectadas.join(" e ")} —{" "}
+                WhatsApp desconectado —{" "}
                 <Link href="/configuracoes" className="underline underline-offset-2">
                   reconectar
                 </Link>

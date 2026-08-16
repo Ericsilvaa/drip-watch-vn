@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import { mutate } from "swr"
 import { Image as ImageIcon, Loader2, X } from "lucide-react"
@@ -10,14 +10,16 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useUnidadesRaw } from "@/hooks/use-raw-data"
+import { useInstanciaStatus } from "@/hooks/use-instancia-status"
 import { renderizarPreview } from "@/lib/lembrete-preview"
+import { renderizarWhatsappMarkup } from "@/lib/whatsapp-markup"
+import { LembreteEditor } from "@/components/configuracoes/lembrete-editor"
 import {
   DIAS_SEMANA_OPCOES,
   LEMBRETES_API_ROUTE,
   LEMBRETES_IMAGEM_API_ROUTE,
   LEMBRETE_IMAGEM_TAMANHO_MAX_MB,
   LEMBRETE_IMAGEM_TIPOS,
-  LEMBRETE_VARIAVEIS,
   MENSAGEM_PADRAO_NOVO_LEMBRETE,
   TETO_SEGURANCA_GLOBAL,
 } from "@/config/lembretes"
@@ -75,8 +77,8 @@ export function LembreteForm({
   const [form, setForm] = useState<FormState>(() => estadoInicial(lembrete))
   const [salvando, setSalvando] = useState(false)
   const [enviandoImagem, setEnviandoImagem] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { data: unidades } = useUnidadesRaw()
+  const { data: whatsapp } = useInstanciaStatus(false)
 
   const editando = Boolean(lembrete)
 
@@ -89,24 +91,6 @@ export function LembreteForm({
       ...f,
       dias_semana: f.dias_semana.includes(dia) ? f.dias_semana.filter((d) => d !== dia) : [...f.dias_semana, dia].sort(),
     }))
-  }
-
-  function inserirVariavel(chave: string) {
-    const textarea = textareaRef.current
-    const valorAtual = form.mensagem_template
-    if (!textarea) {
-      atualizar("mensagem_template", valorAtual + chave)
-      return
-    }
-    const inicio = textarea.selectionStart ?? valorAtual.length
-    const fim = textarea.selectionEnd ?? valorAtual.length
-    const novoValor = valorAtual.slice(0, inicio) + chave + valorAtual.slice(fim)
-    atualizar("mensagem_template", novoValor)
-    requestAnimationFrame(() => {
-      textarea.focus()
-      const novaPosicao = inicio + chave.length
-      textarea.setSelectionRange(novaPosicao, novaPosicao)
-    })
   }
 
   async function selecionarImagem(file: File | undefined | null) {
@@ -142,12 +126,16 @@ export function LembreteForm({
       toast.error("Nome do lembrete é obrigatório.")
       return
     }
-    if (!form.mensagem_template.trim()) {
-      toast.error("Texto da mensagem é obrigatório.")
+    if (!form.mensagem_template.trim() && !form.imagem_url) {
+      toast.error("O lembrete precisa ter texto, imagem, ou os dois.")
       return
     }
     if (form.dias_semana.length === 0) {
       toast.error("Selecione ao menos um dia da semana.")
+      return
+    }
+    if (form.ativo && whatsapp?.state !== "open") {
+      toast.error("WhatsApp desconectado — conecte em Configurações antes de ativar este lembrete.")
       return
     }
 
@@ -308,29 +296,8 @@ export function LembreteForm({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="lembrete-mensagem">Mensagem</Label>
-            <textarea
-              ref={textareaRef}
-              id="lembrete-mensagem"
-              rows={5}
-              value={form.mensagem_template}
-              onChange={(e) => atualizar("mensagem_template", e.target.value)}
-              className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              placeholder="Escreva a mensagem e clique nas variáveis abaixo pra inserir"
-            />
-            <div className="flex flex-wrap gap-1.5">
-              {LEMBRETE_VARIAVEIS.map((v) => (
-                <button
-                  key={v.chave}
-                  type="button"
-                  onClick={() => inserirVariavel(v.chave)}
-                  title={v.descricao}
-                  className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-highlight-bg"
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
+            <Label>Mensagem</Label>
+            <LembreteEditor value={form.mensagem_template} onChange={(v) => atualizar("mensagem_template", v)} />
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -350,7 +317,9 @@ export function LembreteForm({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={form.imagem_url} alt="Preview da imagem" className="w-full rounded-lg object-cover" />
               ) : null}
-              <p className="whitespace-pre-wrap text-sm text-[#1a2233]">{preview || "Sua mensagem aparece aqui…"}</p>
+              <p className="whitespace-pre-wrap text-sm text-[#1a2233]">
+                {preview ? renderizarWhatsappMarkup(preview) : "Sua mensagem aparece aqui…"}
+              </p>
             </div>
           </div>
         </div>
