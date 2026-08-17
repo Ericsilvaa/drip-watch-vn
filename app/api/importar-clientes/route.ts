@@ -2,14 +2,20 @@ import { NextResponse } from "next/server"
 import { IMPORT_EXTENSOES, IMPORT_TAMANHO_MAX_MB } from "@/config/dashboard"
 
 /**
- * Proxy same-origin para o Form Trigger do workflow n8n
- * `01-captura-importacao-clientes.json`. O browser fala só com esta rota
- * (mesma origem, sem CORS); é este handler, rodando no servidor, que faz o
- * POST pro n8n. Não escreve no Supabase — quem valida, normaliza telefone e
- * grava em `clientes`/`importacoes` continua sendo o workflow já existente.
+ * Proxy same-origin para a Edge Function `importar-clientes` (Supabase).
+ * O browser fala só com esta rota (mesma origem, sem CORS, sessão do
+ * usuário já validada aqui); é este handler, rodando no servidor, que
+ * encaminha pra Edge Function com o trigger secret de baixo privilégio.
+ * Não escreve no Supabase diretamente — quem valida, normaliza telefone e
+ * grava em `clientes`/`importacoes` é a Edge Function.
  *
- * Requer a variável de ambiente N8N_IMPORT_WEBHOOK_URL (sem prefixo
- * NEXT_PUBLIC_ — não precisa, e não deve, ficar exposta no browser).
+ * Migrado do n8n local (Tailscale Funnel) em 2026-08-17 — o import parou
+ * de funcionar assim que o n8n foi desligado (dependência de máquina
+ * ligada, o mesmo problema que motivou migrar disparo/opt-out/heartbeat).
+ * Ver docs/decisoes (lavateria-whatsapp-reminder) da mesma data.
+ *
+ * Requer SUPABASE_FUNCTIONS_URL e IMPORT_TRIGGER_SECRET (sem prefixo
+ * NEXT_PUBLIC_ — nunca deve chegar ao browser).
  */
 export const runtime = "nodejs"
 
@@ -19,14 +25,12 @@ function extensaoValida(nomeArquivo: string): boolean {
 }
 
 export async function POST(request: Request) {
-  const webhookUrl = process.env.N8N_IMPORT_WEBHOOK_URL
+  const functionsUrl = process.env.SUPABASE_FUNCTIONS_URL
+  const triggerSecret = process.env.IMPORT_TRIGGER_SECRET
 
-  if (!webhookUrl) {
+  if (!functionsUrl || !triggerSecret) {
     return NextResponse.json(
-      {
-        error:
-          "N8N_IMPORT_WEBHOOK_URL não configurada no servidor. Defina essa variável de ambiente apontando para a URL pública do Form Trigger do workflow 01.",
-      },
+      { error: "SUPABASE_FUNCTIONS_URL / IMPORT_TRIGGER_SECRET não configuradas no servidor." },
       { status: 500 },
     )
   }
@@ -60,39 +64,32 @@ export async function POST(request: Request) {
     )
   }
 
-  // O Form Trigger do n8n espera os campos do multipart por POSIÇÃO
-  // (field-0, field-1, ...), não pelo fieldLabel — achado real de teste,
-  // ver docs/decisoes/2026-08-08-bugs-corrigidos-workflow-01-importacao.md.
-  // Ordem do form original (01-captura-importacao-clientes.json): Unidade
-  // primeiro, Arquivo depois.
   const outgoing = new FormData()
-  outgoing.append("field-0", unidade)
-  outgoing.append("field-1", arquivo, arquivo.name)
+  outgoing.append("unidade", unidade)
+  outgoing.append("arquivo", arquivo, arquivo.name)
 
   let resposta: Response
   try {
-    resposta = await fetch(webhookUrl, { method: "POST", body: outgoing })
+    resposta = await fetch(`${functionsUrl}/importar-clientes`, {
+      method: "POST",
+      headers: { "x-trigger-secret": triggerSecret },
+      body: outgoing,
+    })
   } catch {
     return NextResponse.json(
-      {
-        error:
-          "Não foi possível conectar ao n8n. Verifique se o túnel/n8n local está no ar (o import depende da máquina do Eric estar ligada, Fase A).",
-      },
+      { error: "Não foi possível conectar à Edge Function de importação." },
       { status: 502 },
     )
   }
 
-  const texto = await resposta.text().catch(() => "")
+  const data = await resposta.json().catch(() => ({}))
 
   if (!resposta.ok) {
     return NextResponse.json(
-      { error: texto || `O n8n respondeu com erro (status ${resposta.status}).` },
+      { error: data.error ?? `A importação respondeu com erro (status ${resposta.status}).` },
       { status: 502 },
     )
   }
 
-  return NextResponse.json({
-    message:
-      texto || "Recebido! O processamento e a atualização da base ocorrem em segundo plano.",
-  })
+  return NextResponse.json(data)
 }
