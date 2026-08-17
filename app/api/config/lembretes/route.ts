@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { validarLembrete } from "@/lib/validation/lembrete"
+import { instanciaWhatsappConectada } from "@/lib/integracao/instancia-status"
 import type { Lembrete } from "@/lib/types"
 
 /**
@@ -29,6 +30,13 @@ export async function POST(request: Request) {
 
   const validado = validarLembrete(body)
   if ("erro" in validado) return NextResponse.json({ error: validado.erro }, { status: 400 })
+
+  if (validado.valor.ativo && !(await instanciaWhatsappConectada())) {
+    return NextResponse.json(
+      { error: "WhatsApp desconectado — conecte em Configurações antes de ativar este lembrete." },
+      { status: 409 },
+    )
+  }
 
   const supabase = createServiceClient()
   const { data, error } = await supabase
