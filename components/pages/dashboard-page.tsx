@@ -1,12 +1,9 @@
-"use client"
-
 import { DashboardFiltersProvider } from "@/hooks/use-dashboard-filters"
 import { AppShell } from "@/components/dashboard/app-shell"
 import { FilterBar } from "@/components/dashboard/filter-bar"
 import { KpiCards } from "@/components/dashboard/kpi-cards"
 import { SectionCard } from "@/components/dashboard/section-card"
-import { EnviosPorDiaChart } from "@/components/dashboard/charts/envios-por-dia-chart"
-import { StatusDonut } from "@/components/dashboard/charts/status-donut"
+import { EnviosPorDiaChart, StatusDonut } from "@/components/dashboard/charts/lazy"
 
 export function DashboardPage({ email }: { email: string }) {
   return (

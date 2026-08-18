@@ -74,12 +74,11 @@ export function NovaImportacaoForm() {
       setArquivo(null)
       if (inputRef.current) inputRef.current.value = ""
 
-      // Best-effort: revalida importacoes/clientes daqui a alguns segundos
-      // pra dar tempo do workflow terminar. Não há garantia de timing —
-      // é só pra poupar o usuário de dar F5 manualmente.
+      // Best-effort: revalida importacoes/clientes (dashboard-data cobre os
+      // dois) daqui a alguns segundos pra dar tempo do workflow terminar.
+      // Não há garantia de timing — é só pra poupar o usuário de dar F5.
       setTimeout(() => {
-        mutate("importacoes")
-        mutate("clientes")
+        mutate("dashboard-data")
       }, 5000)
     } catch {
       toast.error("Não foi possível conectar. Verifique sua internet e tente de novo.")

@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * Cliente com service_role — bypassa RLS. disparos_agendados (como clientes/
@@ -7,7 +7,11 @@ import { createClient } from '@supabase/supabase-js'
  * server actions/route handlers podem usar este client, nunca um componente
  * client — a chave nunca pode chegar ao browser.
  */
+let serviceClient: SupabaseClient | undefined
+
 export function createServiceClient() {
+  if (serviceClient) return serviceClient
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   // NUNCA cair pra SUPABASE_SECRET_KEY/SUPABASE_URL (sem NEXT_PUBLIC_) — no
   // Vercel deste projeto essas vêm de uma integração desconectada, apontando
@@ -24,7 +28,8 @@ export function createServiceClient() {
     )
   }
 
-  return createClient(url, serviceKey, {
+  serviceClient = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
+  return serviceClient
 }

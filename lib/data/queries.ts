@@ -27,9 +27,9 @@ function assertNoError<T>(data: T | null, error: { message: string } | null): T 
   return (data ?? []) as T
 }
 
-export async function fetchUnidades(): Promise<Unidade[]> {
-  await exigirUsuario()
-  const supabase = createServiceClient()
+type ServiceClient = ReturnType<typeof createServiceClient>
+
+async function queryUnidades(supabase: ServiceClient): Promise<Unidade[]> {
   const { data, error } = await supabase
     .from('unidades')
     .select('id, nome, cidade')
@@ -37,9 +37,7 @@ export async function fetchUnidades(): Promise<Unidade[]> {
   return assertNoError<Unidade[]>(data as Unidade[], error)
 }
 
-export async function fetchClientes(): Promise<Cliente[]> {
-  await exigirUsuario()
-  const supabase = createServiceClient()
+async function queryClientes(supabase: ServiceClient): Promise<Cliente[]> {
   // telefone_e164/email não entram no select: nenhum componente do painel
   // exibe esses campos, então não há razão pra baixar esse PII pro browser.
   // cpf continua — é usado (só internamente, nunca exibido) pra identificar
@@ -52,9 +50,7 @@ export async function fetchClientes(): Promise<Cliente[]> {
   return assertNoError<Cliente[]>(data as Cliente[], error)
 }
 
-export async function fetchEnvios(): Promise<Envio[]> {
-  await exigirUsuario()
-  const supabase = createServiceClient()
+async function queryEnvios(supabase: ServiceClient): Promise<Envio[]> {
   const { data, error } = await supabase
     .from('envios')
     .select(
@@ -64,9 +60,7 @@ export async function fetchEnvios(): Promise<Envio[]> {
   return assertNoError<Envio[]>(data as Envio[], error)
 }
 
-export async function fetchImportacoes(): Promise<Importacao[]> {
-  await exigirUsuario()
-  const supabase = createServiceClient()
+async function queryImportacoes(supabase: ServiceClient): Promise<Importacao[]> {
   const { data, error } = await supabase
     .from('importacoes')
     .select(
@@ -74,4 +68,33 @@ export async function fetchImportacoes(): Promise<Importacao[]> {
     )
     .order('importado_em', { ascending: false })
   return assertNoError<Importacao[]>(data as Importacao[], error)
+}
+
+export async function fetchUnidades(): Promise<Unidade[]> {
+  await exigirUsuario()
+  return queryUnidades(createServiceClient())
+}
+
+export interface DashboardData {
+  unidades: Unidade[]
+  clientes: Cliente[]
+  envios: Envio[]
+  importacoes: Importacao[]
+}
+
+/**
+ * Busca unidades+clientes+envios+importacoes juntos, com uma única
+ * verificação de auth (não 4) e um único client de serviço — os 4 datasets
+ * só são consumidos juntos mesmo, via useDatasets(). Ver hooks/use-datasets.ts.
+ */
+export async function fetchDashboardData(): Promise<DashboardData> {
+  await exigirUsuario()
+  const supabase = createServiceClient()
+  const [unidades, clientes, envios, importacoes] = await Promise.all([
+    queryUnidades(supabase),
+    queryClientes(supabase),
+    queryEnvios(supabase),
+    queryImportacoes(supabase),
+  ])
+  return { unidades, clientes, envios, importacoes }
 }

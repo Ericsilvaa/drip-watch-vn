@@ -12,6 +12,12 @@ import {
 } from "@/config/dashboard"
 import type { EvolutionState, TipoInstanciaEvolution } from "@/lib/types"
 
+const POLL_INTERVAL_MS = 4000
+// A Evolution API expira o QR bem antes disso — desiste do polling depois de
+// 2min pra não rodar pra sempre se o usuário deixar a aba aberta em segundo
+// plano sem escanear.
+const POLL_TIMEOUT_MS = 2 * 60 * 1000
+
 const ROTULOS: Record<EvolutionState, { label: string; tone: string }> = {
   open: { label: "Conectado", tone: "text-status-success" },
   connecting: { label: "Conectando", tone: "text-status-warning" },
@@ -31,6 +37,7 @@ export function EvolutionConnect({ tipo }: { tipo: TipoInstanciaEvolution }) {
   const [conectando, setConectando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollStartRef = useRef<number | null>(null)
 
   const consultarStatus = useCallback(async () => {
     try {
@@ -58,14 +65,28 @@ export function EvolutionConnect({ tipo }: { tipo: TipoInstanciaEvolution }) {
     consultarStatus()
   }, [consultarStatus])
 
-  // enquanto há QR / conectando, faz polling até abrir
+  // enquanto há QR / conectando, faz polling até abrir (ou até expirar)
   useEffect(() => {
     if (estado === "open") {
       if (pollRef.current) clearInterval(pollRef.current)
+      pollStartRef.current = null
       return
     }
     if (qr && !pollRef.current) {
-      pollRef.current = setInterval(consultarStatus, 4000)
+      pollStartRef.current = Date.now()
+      pollRef.current = setInterval(() => {
+        if (pollStartRef.current && Date.now() - pollStartRef.current > POLL_TIMEOUT_MS) {
+          if (pollRef.current) {
+            clearInterval(pollRef.current)
+            pollRef.current = null
+          }
+          setQr(null)
+          setPairing(null)
+          setErro("QR Code expirou. Gere um novo pra continuar.")
+          return
+        }
+        consultarStatus()
+      }, POLL_INTERVAL_MS)
     }
     return () => {
       if (pollRef.current) {
