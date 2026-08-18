@@ -101,7 +101,25 @@ export const IMAGEM_DISPARO_TAMANHO_MAX_MB = 5
 export const IMAGEM_DISPARO_BUCKET = 'lembretes-imagens'
 export const IMAGEM_DISPARO_API_ROUTE = '/api/disparos/imagem'
 
-/** Rotas internas (same-origin) que fazem proxy para a Evolution API. */
+/**
+ * Rotas internas (same-origin) que fazem proxy para a Evolution API.
+ * Cada uma exige `?tipo=teste|producao` — a Evolution API tem 2 instâncias
+ * reais e as rotas nunca assumem qual delas por padrão (ver
+ * TipoInstanciaEvolution em lib/types.ts).
+ */
 export const EVOLUTION_STATUS_ROUTE = '/api/evolution/status'
 export const EVOLUTION_CONNECT_ROUTE = '/api/evolution/connect'
 export const EVOLUTION_LOGOUT_ROUTE = '/api/evolution/logout'
+
+export const INSTANCIAS_EVOLUTION: { tipo: 'teste' | 'producao'; titulo: string; descricao: string }[] = [
+  {
+    tipo: 'teste',
+    titulo: 'Instância de teste',
+    descricao: 'Número usado só pra validar disparos antes de irem pro cliente final.',
+  },
+  {
+    tipo: 'producao',
+    titulo: 'Instância de produção',
+    descricao: 'Número que atende as unidades de verdade — é o que envia pro cliente final.',
+  },
+]

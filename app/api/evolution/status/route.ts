@@ -1,24 +1,34 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { connectionState, evolutionConfigurada, nomeInstancia } from "@/lib/evolution/server"
+import type { TipoInstanciaEvolution } from "@/lib/types"
 
-export async function GET() {
+function tipoValido(valor: string | null): valor is TipoInstanciaEvolution {
+  return valor === "teste" || valor === "producao"
+}
+
+export async function GET(request: Request) {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
 
-  if (!evolutionConfigurada()) {
+  const tipo = new URL(request.url).searchParams.get("tipo")
+  if (!tipoValido(tipo)) {
+    return NextResponse.json({ error: "Parâmetro 'tipo' precisa ser 'teste' ou 'producao'." }, { status: 400 })
+  }
+
+  if (!evolutionConfigurada(tipo)) {
     return NextResponse.json({ error: "Evolution API não configurada" }, { status: 503 })
   }
 
   try {
-    const { state, instance } = await connectionState()
+    const { state, instance } = await connectionState(tipo)
     return NextResponse.json({ state, instance, number: null })
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Falha ao consultar status", instance: nomeInstancia() },
+      { error: e instanceof Error ? e.message : "Falha ao consultar status", instance: nomeInstancia(tipo) },
       { status: 502 },
     )
   }
