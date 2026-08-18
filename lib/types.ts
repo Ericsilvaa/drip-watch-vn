@@ -56,25 +56,39 @@ export interface LinhaHistorico extends EnvioDetalhado {
   multi_unidade: boolean
 }
 
-/** Template de mensagem WhatsApp (tabela public.templates). */
+/**
+ * Regra de disparo (tabela public.disparos_agendados — é o que
+ * supabase/functions/disparo-diario realmente lê via RPC
+ * disparos_devidos_agora/clientes_elegiveis). "Template" aqui é só o nome
+ * do conceito na UI; os campos têm que bater com a tabela real, senão o
+ * CRUD grava algo que o disparo nunca vai ler.
+ */
 export interface Template {
   id: string
   unidade_id: string | null
   nome: string
-  descricao: string | null
-  corpo: string
+  horario: string
+  dias_semana: number[]
+  dias_apos_compra: number
   ativo: boolean
+  mensagem_template: string | null
+  imagem_url: string | null
+  quantidade_max: number | null
   criado_em: string
   atualizado_em: string
 }
 
-/** Payload de criação/edição de template. */
+/** Payload de criação/edição de disparo. */
 export interface TemplateInput {
   nome: string
-  descricao: string | null
-  corpo: string
   unidade_id: string | null
+  horario: string
+  dias_semana: number[]
+  dias_apos_compra: number
   ativo: boolean
+  mensagem_template: string | null
+  imagem_url: string | null
+  quantidade_max: number | null
 }
 
 /** Estado da conexão com a Evolution API. */

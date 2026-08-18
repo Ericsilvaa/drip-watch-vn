@@ -13,18 +13,23 @@ function horaAgora() {
 }
 
 /** Bolha de mensagem enviada (verde), estilo WhatsApp. */
-function Bolha({ corpo, device }: { corpo: string; device: Device }) {
+function Bolha({ corpo, device, imagemUrl }: { corpo: string; device: Device; imagemUrl?: string | null }) {
   const texto = aplicarExemplo(corpo)
   return (
     <div className="flex justify-end">
       <div
         className={cn(
-          "relative max-w-[80%] rounded-lg px-2.5 py-1.5 text-[13px] leading-snug text-[#111b21] shadow-sm",
+          "relative max-w-[80%] rounded-lg text-[13px] leading-snug text-[#111b21] shadow-sm",
           "bg-[#d9fdd3]",
+          imagemUrl ? "p-1" : "px-2.5 py-1.5",
           device === "ios" ? "rounded-br-sm" : "rounded-tr-sm",
         )}
       >
-        <p className="whitespace-pre-wrap break-words pr-10">{renderWhatsApp(texto)}</p>
+        {imagemUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imagemUrl} alt="Imagem do disparo" className="mb-1 w-full rounded-md object-cover" />
+        ) : null}
+        {texto ? <p className="whitespace-pre-wrap break-words px-1.5 pb-1 pr-10">{renderWhatsApp(texto)}</p> : null}
         <span className="absolute bottom-1 right-2 flex items-center gap-0.5 text-[10px] text-[#667781]">
           {horaAgora()}
           <CheckCheck className="size-3 text-[#53bdeb]" />
@@ -60,7 +65,7 @@ function ChatHeader({ device }: { device: Device }) {
 }
 
 /** Moldura de celular com o chat dentro. */
-function Telefone({ device, corpo }: { device: Device; corpo: string }) {
+function Telefone({ device, corpo, imagemUrl }: { device: Device; corpo: string; imagemUrl?: string | null }) {
   const ios = device === "ios"
   return (
     <div
@@ -100,7 +105,7 @@ function Telefone({ device, corpo }: { device: Device; corpo: string }) {
             Hoje
           </div>
           <div className="flex flex-col gap-2">
-            <Bolha corpo={corpo} device={device} />
+            <Bolha corpo={corpo} device={device} imagemUrl={imagemUrl} />
           </div>
         </div>
       </div>
@@ -108,9 +113,9 @@ function Telefone({ device, corpo }: { device: Device; corpo: string }) {
   )
 }
 
-export function WhatsAppPreview({ corpo }: { corpo: string }) {
+export function WhatsAppPreview({ corpo, imagemUrl }: { corpo: string; imagemUrl?: string | null }) {
   const [device, setDevice] = useState<Device>("ios")
-  const vazio = !corpo.trim()
+  const vazio = !corpo.trim() && !imagemUrl
 
   return (
     <div className="flex flex-col gap-4">
@@ -138,7 +143,7 @@ export function WhatsAppPreview({ corpo }: { corpo: string }) {
           Comece a escrever a mensagem para ver como ela aparecerá na conversa do WhatsApp.
         </div>
       ) : (
-        <Telefone device={device} corpo={corpo} />
+        <Telefone device={device} corpo={corpo} imagemUrl={imagemUrl} />
       )}
 
       <p className="text-center text-xs text-muted-foreground">

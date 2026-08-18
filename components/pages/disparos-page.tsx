@@ -8,6 +8,7 @@ import { TemplatesList } from "@/components/disparos/templates-list"
 import { RecentTable } from "@/components/dashboard/recent-table"
 import { HistoricoTable } from "@/components/dashboard/historico-table"
 import { ImportacoesPanel } from "@/components/dashboard/importacoes-panel"
+import { ImportarClientesDialog } from "@/components/dashboard/importar-clientes-dialog"
 
 export function DisparosPage({ email }: { email: string }) {
   return (
@@ -39,7 +40,11 @@ export function DisparosPage({ email }: { email: string }) {
           </section>
 
           <section>
-            <SectionCard title="Importações recentes" description="Cargas de clientes por unidade">
+            <SectionCard
+              title="Importações recentes"
+              description="Cargas de clientes por unidade"
+              action={<ImportarClientesDialog />}
+            >
               <ImportacoesPanel />
             </SectionCard>
           </section>
