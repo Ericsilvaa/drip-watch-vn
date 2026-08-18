@@ -54,3 +54,23 @@ export const IMPORT_TAMANHO_MAX_MB = 10
 export const IMPORT_API_ROUTE = '/api/importar-clientes'
 
 export const ITENS_POR_PAGINA = 10
+
+/**
+ * Placeholders suportados nos templates. São substituídos por dados reais do
+ * cliente no momento do disparo (pelo n8n/Evolution). No preview usamos
+ * valores de exemplo.
+ */
+export const PLACEHOLDERS = [
+  { chave: '{{nome}}', descricao: 'Primeiro nome do cliente', exemplo: 'Ana' },
+  { chave: '{{unidade}}', descricao: 'Nome da unidade', exemplo: 'Lavateria Cambeba' },
+] as const
+
+export const PREVIEW_EXEMPLO: Record<string, string> = {
+  '{{nome}}': 'Ana',
+  '{{unidade}}': 'Lavateria Cambeba',
+}
+
+/** Rotas internas (same-origin) que fazem proxy para a Evolution API. */
+export const EVOLUTION_STATUS_ROUTE = '/api/evolution/status'
+export const EVOLUTION_CONNECT_ROUTE = '/api/evolution/connect'
+export const EVOLUTION_LOGOUT_ROUTE = '/api/evolution/logout'

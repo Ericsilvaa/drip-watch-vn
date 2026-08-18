@@ -1,17 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { History, LayoutDashboard, LogOut, Send, Upload, X } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { History, LayoutDashboard, LogOut, Send, Settings, X } from "lucide-react"
 import { signOutAction } from "@/app/auth/actions"
 import { Logo } from "@/components/brand/logo"
 import { dashboardConfig } from "@/config/dashboard"
 import { cn } from "@/lib/utils"
 
 export const NAV_ITEMS = [
-  { id: "visao-geral", label: "Visão geral", icon: LayoutDashboard },
-  { id: "disparos", label: "Disparos", icon: Send },
-  { id: "historico", label: "Histórico", icon: History },
-  { id: "importacoes", label: "Importações", icon: Upload },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/disparos", label: "Disparos", icon: Send },
+  { href: "/configuracoes", label: "Configurações", icon: Settings },
 ] as const
 
 function iniciais(email: string) {
@@ -30,26 +30,12 @@ export function Sidebar({
   open: boolean
   onClose: () => void
 }) {
-  const [ativo, setAtivo] = useState<string>(NAV_ITEMS[0].id)
+  const pathname = usePathname()
 
-  useEffect(() => {
-    const secoes = NAV_ITEMS.map((n) => document.getElementById(n.id)).filter(
-      (el): el is HTMLElement => Boolean(el),
-    )
-    if (!secoes.length) return
-
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const visivel = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
-        if (visivel) setAtivo(visivel.target.id)
-      },
-      { rootMargin: "-45% 0px -50% 0px", threshold: [0, 0.25, 0.5, 1] },
-    )
-    secoes.forEach((s) => obs.observe(s))
-    return () => obs.disconnect()
-  }, [])
+  function ativo(href: string) {
+    if (href === "/") return pathname === "/"
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
 
   return (
     <>
@@ -98,13 +84,13 @@ export function Sidebar({
           </p>
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon
-            const isAtivo = ativo === item.id
+            const isAtivo = ativo(item.href)
             return (
-              <a
-                key={item.id}
-                href={`#${item.id}`}
+              <Link
+                key={item.href}
+                href={item.href}
                 onClick={onClose}
-                aria-current={isAtivo ? "true" : undefined}
+                aria-current={isAtivo ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                   isAtivo
@@ -115,7 +101,7 @@ export function Sidebar({
                 <Icon className="size-[18px] shrink-0" strokeWidth={2.1} />
                 {item.label}
                 {isAtivo && <span className="ml-auto size-1.5 rounded-full bg-primary-foreground/80" />}
-              </a>
+              </Link>
             )
           })}
         </nav>

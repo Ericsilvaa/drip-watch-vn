@@ -1,27 +1,24 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { useState } from "react"
 import { Menu, RefreshCw } from "lucide-react"
 import { useSWRConfig } from "swr"
 import { cn } from "@/lib/utils"
 
-function saudacao(d = new Date()) {
-  const h = d.getHours()
-  if (h < 12) return "Bom dia"
-  if (h < 18) return "Boa tarde"
-  return "Boa noite"
-}
+const CHAVES = ["unidades", "clientes", "envios", "importacoes", "templates"]
 
-const dataLonga = new Intl.DateTimeFormat("pt-BR", {
-  weekday: "long",
-  day: "2-digit",
-  month: "long",
-})
-
-const CHAVES = ["unidades", "clientes", "envios", "importacoes"]
-
-export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
-  const hoje = dataLonga.format(new Date())
+export function Topbar({
+  onOpenMenu,
+  title,
+  subtitle,
+  actions,
+}: {
+  onOpenMenu: () => void
+  title: string
+  subtitle?: string
+  actions?: ReactNode
+}) {
   const { mutate } = useSWRConfig()
   const [atualizando, setAtualizando] = useState(false)
 
@@ -45,20 +42,14 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
 
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-bold tracking-tight text-foreground text-balance sm:text-xl">
-            {saudacao()}, equipe Lavateria
+            {title}
           </h1>
-          <p className="truncate text-sm text-muted-foreground first-letter:uppercase">
-            {hoje} · acompanhe os disparos de recompra por WhatsApp
-          </p>
+          {subtitle && (
+            <p className="truncate text-sm text-muted-foreground first-letter:uppercase">{subtitle}</p>
+          )}
         </div>
 
-        <span className="hidden items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground sm:inline-flex">
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-status-success opacity-60" />
-            <span className="relative inline-flex size-2 rounded-full bg-status-success" />
-          </span>
-          Dados ao vivo
-        </span>
+        {actions}
 
         <button
           type="button"

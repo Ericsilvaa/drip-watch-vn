@@ -55,3 +55,34 @@ export interface LinhaHistorico extends EnvioDetalhado {
   total_disparos_cliente: number
   multi_unidade: boolean
 }
+
+/** Template de mensagem WhatsApp (tabela public.templates). */
+export interface Template {
+  id: string
+  unidade_id: string | null
+  nome: string
+  descricao: string | null
+  corpo: string
+  ativo: boolean
+  criado_em: string
+  atualizado_em: string
+}
+
+/** Payload de criação/edição de template. */
+export interface TemplateInput {
+  nome: string
+  descricao: string | null
+  corpo: string
+  unidade_id: string | null
+  ativo: boolean
+}
+
+/** Estado da conexão com a Evolution API. */
+export type EvolutionState = 'open' | 'connecting' | 'close' | 'unknown'
+
+export interface EvolutionStatus {
+  state: EvolutionState
+  instance: string | null
+  /** número/JID conectado, quando disponível */
+  number: string | null
+}

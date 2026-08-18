@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { DashboardPage } from "@/components/pages/dashboard-page"
+import { ConfiguracoesPage } from "@/components/pages/configuracoes-page"
 
 export default async function Page() {
   const supabase = await createClient()
@@ -12,5 +12,5 @@ export default async function Page() {
     redirect("/auth/login")
   }
 
-  return <DashboardPage email={user.email ?? ""} />
+  return <ConfiguracoesPage email={user.email ?? ""} />
 }

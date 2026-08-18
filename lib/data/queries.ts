@@ -6,7 +6,7 @@
  * o SWR tratar e a UI exibir o estado de erro.
  */
 import { createClient } from '@/lib/supabase/client'
-import type { Cliente, Envio, Importacao, Unidade } from '@/lib/types'
+import type { Cliente, Envio, Importacao, Template, Unidade } from '@/lib/types'
 
 function assertNoError<T>(data: T | null, error: { message: string } | null): T {
   if (error) throw new Error(error.message)
@@ -41,6 +41,15 @@ export async function fetchEnvios(): Promise<Envio[]> {
     )
     .order('enviado_em', { ascending: false })
   return assertNoError<Envio[]>(data as Envio[], error)
+}
+
+export async function fetchTemplates(): Promise<Template[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('templates')
+    .select('id, unidade_id, nome, descricao, corpo, ativo, criado_em, atualizado_em')
+    .order('criado_em', { ascending: false })
+  return assertNoError<Template[]>(data as Template[], error)
 }
 
 export async function fetchImportacoes(): Promise<Importacao[]> {
