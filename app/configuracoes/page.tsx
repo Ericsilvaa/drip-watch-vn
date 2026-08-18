@@ -1,23 +1,16 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { sanitizePreferencias } from "@/config/dashboard"
-import { Configuracoes } from "@/components/configuracoes/configuracoes"
+import { ConfiguracoesPage } from "@/components/pages/configuracoes-page"
 
-export default async function ConfiguracoesPage() {
+export default async function Page() {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect("/login")
+    redirect("/auth/login")
   }
 
-  return (
-    <Configuracoes
-      email={user.email ?? ""}
-      fullName={(user.user_metadata?.full_name as string | undefined) ?? ""}
-      preferencias={sanitizePreferencias(user.user_metadata?.preferencias)}
-    />
-  )
+  return <ConfiguracoesPage email={user.email ?? ""} />
 }

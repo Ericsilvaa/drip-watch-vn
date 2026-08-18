@@ -1,12 +1,26 @@
+"use server"
+
 /**
- * Camada de acesso a dados (somente leitura).
- * Funções puras que leem do Supabase. Nenhum componente importa o supabase
- * diretamente — tudo passa por aqui, o que permite trocar/ajustar uma query
- * sem tocar na UI. Erros de leitura (ex: RLS bloqueando) são propagados para
- * o SWR tratar e a UI exibir o estado de erro.
+ * Camada de acesso a dados (somente leitura), como server actions.
+ * clientes/envios/unidades/importacoes têm RLS habilitado sem policies
+ * (deny-all via PostgREST) de propósito — dados sensíveis (CPF, telefone)
+ * só podem sair por conexão de serviço, nunca pela chave anon/authenticated
+ * do browser (ver docs/decisoes/2026-08-08-rls-sem-politicas-nas-tabelas.md
+ * no repo lavateria-whatsapp-reminder). Por isso aqui é sempre
+ * createServiceClient(), nunca o client do browser — os hooks em
+ * hooks/use-raw-data.ts chamam estas funções como fetcher do SWR.
  */
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import type { Cliente, Envio, Importacao, Unidade } from '@/lib/types'
+
+async function exigirUsuario() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('Não autorizado')
+}
 
 function assertNoError<T>(data: T | null, error: { message: string } | null): T {
   if (error) throw new Error(error.message)
@@ -14,7 +28,8 @@ function assertNoError<T>(data: T | null, error: { message: string } | null): T 
 }
 
 export async function fetchUnidades(): Promise<Unidade[]> {
-  const supabase = createClient()
+  await exigirUsuario()
+  const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('unidades')
     .select('id, nome, cidade')
@@ -23,7 +38,8 @@ export async function fetchUnidades(): Promise<Unidade[]> {
 }
 
 export async function fetchClientes(): Promise<Cliente[]> {
-  const supabase = createClient()
+  await exigirUsuario()
+  const supabase = createServiceClient()
   // telefone_e164/email não entram no select: nenhum componente do painel
   // exibe esses campos, então não há razão pra baixar esse PII pro browser.
   // cpf continua — é usado (só internamente, nunca exibido) pra identificar
@@ -37,7 +53,8 @@ export async function fetchClientes(): Promise<Cliente[]> {
 }
 
 export async function fetchEnvios(): Promise<Envio[]> {
-  const supabase = createClient()
+  await exigirUsuario()
+  const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('envios')
     .select(
@@ -48,7 +65,8 @@ export async function fetchEnvios(): Promise<Envio[]> {
 }
 
 export async function fetchImportacoes(): Promise<Importacao[]> {
-  const supabase = createClient()
+  await exigirUsuario()
+  const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('importacoes')
     .select(

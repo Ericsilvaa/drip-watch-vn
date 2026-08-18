@@ -10,8 +10,9 @@ export interface Cliente {
   id: string
   unidade_id: string
   nome: string
-  /** Usado só internamente (marcação multi-unidade) — nunca exibido na UI. */
   cpf: string | null
+  telefone_e164: string | null
+  email: string | null
   ultima_compra: string | null
   qtd_compras: number
   valor_total: number
@@ -55,11 +56,17 @@ export interface LinhaHistorico extends EnvioDetalhado {
   multi_unidade: boolean
 }
 
-/** Linha de disparos_agendados — um lembrete configurável (Configuração de Disparos). */
-export interface Lembrete {
+/**
+ * Regra de disparo (tabela public.disparos_agendados — é o que
+ * supabase/functions/disparo-diario realmente lê via RPC
+ * disparos_devidos_agora/clientes_elegiveis). "Template" aqui é só o nome
+ * do conceito na UI; os campos têm que bater com a tabela real, senão o
+ * CRUD grava algo que o disparo nunca vai ler.
+ */
+export interface Template {
   id: string
-  nome: string
   unidade_id: string | null
+  nome: string
   horario: string
   dias_semana: number[]
   dias_apos_compra: number
@@ -71,3 +78,34 @@ export interface Lembrete {
   atualizado_em: string
 }
 
+/** Payload de criação/edição de disparo. */
+export interface TemplateInput {
+  nome: string
+  unidade_id: string | null
+  horario: string
+  dias_semana: number[]
+  dias_apos_compra: number
+  ativo: boolean
+  mensagem_template: string | null
+  imagem_url: string | null
+  quantidade_max: number | null
+}
+
+/** Estado da conexão com a Evolution API. */
+export type EvolutionState = 'open' | 'connecting' | 'close' | 'unknown'
+
+export interface EvolutionStatus {
+  state: EvolutionState
+  instance: string | null
+  /** número/JID conectado, quando disponível */
+  number: string | null
+}
+
+/**
+ * A Evolution API tem 2 instâncias reais (ver docs/decisoes/2026-08-16-
+ * instancia-por-grupo-teste.md no repo lavateria-whatsapp-reminder):
+ * "teste" é pra onde clientes com grupo_teste=true são roteados,
+ * "producao" atende as unidades de verdade. O dashboard precisa gerenciar
+ * as duas separadamente — nunca as trata como uma coisa só.
+ */
+export type TipoInstanciaEvolution = 'teste' | 'producao'

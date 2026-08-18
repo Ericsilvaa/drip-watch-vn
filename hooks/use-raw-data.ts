@@ -13,7 +13,8 @@ import {
   fetchImportacoes,
   fetchUnidades,
 } from '@/lib/data/queries'
-import type { Cliente, Envio, Importacao, Unidade } from '@/lib/types'
+import { listarTemplates } from '@/app/templates/actions'
+import type { Cliente, Envio, Importacao, Template, Unidade } from '@/lib/types'
 
 const SWR_OPTS = {
   revalidateOnFocus: false,
@@ -31,4 +32,7 @@ export function useEnviosRaw() {
 }
 export function useImportacoesRaw() {
   return useSWR<Importacao[]>('importacoes', fetchImportacoes, SWR_OPTS)
+}
+export function useTemplatesRaw() {
+  return useSWR<Template[]>('templates', listarTemplates, SWR_OPTS)
 }

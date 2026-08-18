@@ -7,9 +7,9 @@
  */
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 import {
-  PREFERENCIAS_PADRAO,
+  ITENS_POR_PAGINA,
+  PERIODO_PADRAO,
   type PeriodoKey,
-  type PreferenciasPainel,
   type UnidadeSlug,
 } from '@/config/dashboard'
 
@@ -27,7 +27,6 @@ interface FiltersState {
   setUnidade: (u: UnidadeSlug) => void
   incluirGrupoTeste: boolean
   setIncluirGrupoTeste: (v: boolean) => void
-  /** Vem de Preferências — não editável nesta sessão, só na página /configuracoes. */
   itensPorPagina: number
   /** Início do período selecionado (Date). Fim é sempre "agora". */
   inicioPeriodo: Date
@@ -40,16 +39,10 @@ function hoje(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-export function DashboardFiltersProvider({
-  children,
-  preferencias = PREFERENCIAS_PADRAO,
-}: {
-  children: ReactNode
-  preferencias?: PreferenciasPainel
-}) {
-  const [periodo, setPeriodo] = useState<PeriodoKey>(preferencias.periodoPadrao)
-  const [unidade, setUnidade] = useState<UnidadeSlug>(preferencias.unidadePadrao)
-  const [incluirGrupoTeste, setIncluirGrupoTeste] = useState(preferencias.incluirGrupoTestePadrao)
+export function DashboardFiltersProvider({ children }: { children: ReactNode }) {
+  const [periodo, setPeriodo] = useState<PeriodoKey>(PERIODO_PADRAO)
+  const [unidade, setUnidade] = useState<UnidadeSlug>('todas')
+  const [incluirGrupoTeste, setIncluirGrupoTeste] = useState(false)
   const [customRange, setCustomRange] = useState<CustomRange>({
     from: hoje(),
     to: hoje(),
@@ -87,7 +80,7 @@ export function DashboardFiltersProvider({
     setUnidade,
     incluirGrupoTeste,
     setIncluirGrupoTeste,
-    itensPorPagina: preferencias.itensPorPagina,
+    itensPorPagina: ITENS_POR_PAGINA,
     inicioPeriodo,
     fimPeriodo,
   }

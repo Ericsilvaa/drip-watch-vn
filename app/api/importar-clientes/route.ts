@@ -4,15 +4,11 @@ import { IMPORT_EXTENSOES, IMPORT_TAMANHO_MAX_MB } from "@/config/dashboard"
 /**
  * Proxy same-origin para a Edge Function `importar-clientes` (Supabase).
  * O browser fala só com esta rota (mesma origem, sem CORS, sessão do
- * usuário já validada aqui); é este handler, rodando no servidor, que
- * encaminha pra Edge Function com o trigger secret de baixo privilégio.
- * Não escreve no Supabase diretamente — quem valida, normaliza telefone e
- * grava em `clientes`/`importacoes` é a Edge Function.
- *
- * Migrado do n8n local (Tailscale Funnel) em 2026-08-17 — o import parou
- * de funcionar assim que o n8n foi desligado (dependência de máquina
- * ligada, o mesmo problema que motivou migrar disparo/opt-out/heartbeat).
- * Ver docs/decisoes (lavateria-whatsapp-reminder) da mesma data.
+ * usuário já validada pelo middleware antes de chegar aqui); é este
+ * handler, rodando no servidor, que encaminha pra Edge Function com o
+ * trigger secret de baixo privilégio. Não escreve no Supabase diretamente —
+ * quem valida, normaliza telefone e grava em `clientes`/`importacoes` é a
+ * Edge Function.
  *
  * Requer SUPABASE_FUNCTIONS_URL e IMPORT_TRIGGER_SECRET (sem prefixo
  * NEXT_PUBLIC_ — nunca deve chegar ao browser).

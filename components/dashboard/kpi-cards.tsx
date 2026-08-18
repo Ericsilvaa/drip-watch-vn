@@ -1,6 +1,16 @@
 "use client"
 
-import { AlertTriangle, TrendingDown, TrendingUp } from "lucide-react"
+import {
+  AlertTriangle,
+  BellOff,
+  CalendarClock,
+  CheckCircle2,
+  Send,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  type LucideIcon,
+} from "lucide-react"
 import { useKPIs, type Kpi } from "@/hooks/use-kpis"
 import { fmtNumero } from "@/lib/format"
 import { Sparkline } from "@/components/dashboard/sparkline"
@@ -14,64 +24,83 @@ const toneColor: Record<Kpi["tone"], string> = {
   neutral: "var(--color-status-neutral)",
 }
 
-/**
- * Pra KPIs "quanto maior, melhor" (default/success) subir é bom; pro de
- * falhas (tone error) subir é ruim — inverte a cor do selo sem inventar dado novo.
- */
-function DeltaPill({ deltaPercent, tone }: { deltaPercent: number | null | undefined; tone: Kpi["tone"] }) {
-  if (deltaPercent === null || deltaPercent === undefined) return null
-  const subiu = deltaPercent > 0
-  const estavel = Math.abs(deltaPercent) < 0.5
-  const positivoParaONegocio = tone === "error" ? !subiu : subiu
-  const corClasse = estavel
-    ? "bg-status-neutral-bg text-status-neutral"
-    : positivoParaONegocio
-      ? "bg-status-success-bg text-status-success"
-      : "bg-status-error-bg text-status-error"
+const iconByKpi: Record<string, LucideIcon> = {
+  total: Send,
+  entregues: CheckCircle2,
+  falhas: AlertTriangle,
+  base: Users,
+  optouts: BellOff,
+  elegiveis: CalendarClock,
+}
 
-  return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium", corClasse)}>
-      {!estavel ? subiu ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" /> : null}
-      {estavel ? "estável" : `${subiu ? "+" : ""}${deltaPercent.toFixed(1).replace(".", ",")}%`}
-    </span>
-  )
+const chipTone: Record<Kpi["tone"], string> = {
+  default: "bg-accent text-accent-foreground",
+  success: "bg-status-success-bg text-status-success",
+  error: "bg-status-error-bg text-status-error",
+  neutral: "bg-status-neutral-bg text-status-neutral",
+}
+
+/** Variação simples: metade recente da série vs. metade anterior. */
+function variacao(trend: number[]) {
+  if (trend.length < 2) return null
+  const meio = Math.floor(trend.length / 2)
+  const ant = trend.slice(0, meio).reduce((a, b) => a + b, 0)
+  const rec = trend.slice(meio).reduce((a, b) => a + b, 0)
+  if (ant === 0 && rec === 0) return null
+  if (ant === 0) return { pct: 100, up: true }
+  const pct = ((rec - ant) / ant) * 100
+  return { pct: Math.round(pct), up: pct >= 0 }
 }
 
 function KpiCard({ kpi }: { kpi: Kpi }) {
+  const Icon = iconByKpi[kpi.id] ?? Send
+  const v = variacao(kpi.trend)
+
   return (
     <div
       className={cn(
-        "card-elevated flex flex-col gap-3 rounded-2xl bg-card p-4",
-        kpi.alerta && "ring-1 ring-status-error/40",
+        "card-elevated flex flex-col gap-4 rounded-2xl border bg-card p-5",
+        kpi.alerta ? "border-status-error/40" : "border-border/60",
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-medium text-muted-foreground">{kpi.label}</span>
+        <span className={cn("flex size-10 items-center justify-center rounded-xl", chipTone[kpi.tone])}>
+          <Icon className="size-5" strokeWidth={2.1} />
+        </span>
         {kpi.alerta ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-status-error-bg px-2 py-0.5 text-xs font-medium text-status-error">
             <AlertTriangle className="size-3" />
             Alerta
           </span>
-        ) : (
-          <DeltaPill deltaPercent={kpi.deltaPercent} tone={kpi.tone} />
-        )}
+        ) : v ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+              v.up ? "bg-status-success-bg text-status-success" : "bg-status-error-bg text-status-error",
+            )}
+          >
+            {v.up ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+            {v.up ? "+" : ""}
+            {v.pct}%
+          </span>
+        ) : null}
       </div>
 
-      <div className="flex items-end justify-between gap-2">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-sm font-medium text-muted-foreground">{kpi.label}</span>
         <span
           className={cn(
-            "text-3xl font-semibold tracking-tight tabular-nums",
+            "text-3xl font-bold tracking-tight tabular-nums",
             kpi.tone === "error" && kpi.valor > 0 ? "text-status-error" : "text-foreground",
           )}
         >
           {fmtNumero(kpi.valor)}
         </span>
-        <Sparkline data={kpi.trend} color={toneColor[kpi.tone]} className="shrink-0" />
       </div>
 
-      <div className="flex items-center justify-between gap-2">
-        {kpi.apoio ? <p className="text-xs text-muted-foreground">{kpi.apoio}</p> : <span />}
-        {kpi.alerta ? <DeltaPill deltaPercent={kpi.deltaPercent} tone={kpi.tone} /> : null}
+      <div className="mt-auto flex items-end justify-between gap-2">
+        {kpi.apoio ? <p className="text-xs text-muted-foreground text-pretty">{kpi.apoio}</p> : <span />}
+        <Sparkline data={kpi.trend} color={toneColor[kpi.tone]} className="shrink-0" />
       </div>
     </div>
   )
@@ -82,9 +111,9 @@ export function KpiCards() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <LoadingBlock key={i} className="h-32" />
+          <LoadingBlock key={i} className="h-40 rounded-2xl" />
         ))}
       </div>
     )
@@ -93,7 +122,7 @@ export function KpiCards() {
   if (error) return <ErrorState message={error.message} />
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {kpis.map((kpi) => (
         <KpiCard key={kpi.id} kpi={kpi} />
       ))}

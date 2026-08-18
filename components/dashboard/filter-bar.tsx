@@ -27,13 +27,13 @@ export function FilterBar() {
   } = useDashboardFilters()
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
+    <div className="card-elevated flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
       <div className="flex flex-wrap items-center gap-3">
         {/* Período */}
         <div
           role="group"
           aria-label="Período"
-          className="inline-flex items-center rounded-full bg-muted p-0.5"
+          className="inline-flex items-center rounded-lg bg-muted p-0.5"
         >
           {PERIODOS.map((p) => (
             <button
@@ -42,7 +42,7 @@ export function FilterBar() {
               onClick={() => setPeriodo(p.key)}
               aria-pressed={periodo === p.key}
               className={cn(
-                "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 periodo === p.key
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
