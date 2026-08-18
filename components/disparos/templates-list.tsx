@@ -22,7 +22,17 @@ import { TemplateDialog } from "@/components/disparos/template-dialog"
 import { useTemplatesRaw, useUnidadesRaw } from "@/hooks/use-raw-data"
 import { aplicarExemplo } from "@/lib/template-render"
 import { alternarAtivo, excluirTemplate } from "@/app/templates/actions"
+import { DIAS_SEMANA_OPCOES } from "@/config/dashboard"
 import type { Template } from "@/lib/types"
+
+function resumoDias(dias: number[]): string {
+  if (dias.length === 7) return "Todos os dias"
+  return dias
+    .slice()
+    .sort()
+    .map((d) => DIAS_SEMANA_OPCOES.find((o) => o.valor === d)?.label ?? "")
+    .join(", ")
+}
 
 export function TemplatesList() {
   const { data: templates, isLoading } = useTemplatesRaw()
@@ -103,9 +113,10 @@ export function TemplatesList() {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <h3 className="truncate text-sm font-semibold text-foreground">{t.nome}</h3>
-                  {t.descricao && (
-                    <p className="truncate text-xs text-muted-foreground">{t.descricao}</p>
-                  )}
+                  <p className="truncate text-xs text-muted-foreground">
+                    {resumoDias(t.dias_semana)} às {t.horario.slice(0, 5)} · {t.dias_apos_compra} dias após a compra
+                    {t.quantidade_max ? ` · até ${t.quantidade_max}/rodada` : ""}
+                  </p>
                 </div>
                 <Badge variant={t.ativo ? "default" : "secondary"} className="shrink-0">
                   {t.ativo ? "Ativo" : "Inativo"}
@@ -113,7 +124,7 @@ export function TemplatesList() {
               </div>
 
               <p className="line-clamp-3 min-h-[3.75rem] text-sm text-muted-foreground">
-                {aplicarExemplo(t.corpo)}
+                {t.mensagem_template ? aplicarExemplo(t.mensagem_template) : t.imagem_url ? "Só imagem, sem texto." : ""}
               </p>
 
               <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">

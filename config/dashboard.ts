@@ -50,25 +50,56 @@ export type StatusEnvio = keyof typeof STATUS_ENVIO
 export const IMPORT_EXTENSOES = ['.xlsx', '.xls', '.csv'] as const
 export const IMPORT_TAMANHO_MAX_MB = 10
 
-/** Endpoint interno (same-origin) que faz proxy do upload para o webhook do n8n. */
+/** Endpoint interno (same-origin) que faz proxy do upload para a Edge Function importar-clientes (Supabase). */
 export const IMPORT_API_ROUTE = '/api/importar-clientes'
 
 export const ITENS_POR_PAGINA = 10
 
 /**
- * Placeholders suportados nos templates. São substituídos por dados reais do
- * cliente no momento do disparo (pelo n8n/Evolution). No preview usamos
- * valores de exemplo.
+ * Placeholders suportados nos disparos. Espelha exatamente o que
+ * supabase/functions/disparo-diario/index.ts (substituirVariaveis) sabe
+ * substituir no envio real — nenhum aqui é inventado; se mudar lá, mudar
+ * aqui também. Substituição real acontece na Edge Function disparo-diario
+ * (GitHub Actions → Evolution API), não em n8n. No preview usamos valores
+ * de exemplo.
  */
 export const PLACEHOLDERS = [
   { chave: '{{nome}}', descricao: 'Primeiro nome do cliente', exemplo: 'Ana' },
   { chave: '{{unidade}}', descricao: 'Nome da unidade', exemplo: 'Lavateria Cambeba' },
+  { chave: '{{dias}}', descricao: 'Dias após a compra configurados neste disparo', exemplo: '5' },
+  { chave: '{{dia_semana}}', descricao: 'Dia da semana do envio', exemplo: 'sexta-feira' },
+  { chave: '{{hora}}', descricao: 'Horário configurado do disparo', exemplo: '09:00' },
+  { chave: '{{data}}', descricao: 'Data do dia do envio', exemplo: '15/08' },
 ] as const
 
 export const PREVIEW_EXEMPLO: Record<string, string> = {
   '{{nome}}': 'Ana',
   '{{unidade}}': 'Lavateria Cambeba',
+  '{{dias}}': '5',
+  '{{dia_semana}}': 'sexta-feira',
+  '{{hora}}': '09:00',
+  '{{data}}': '15/08',
 }
+
+/** Dias da semana pro seletor do disparo — mesmos valores de extract(dow) usados em disparos_agendados (0=domingo). */
+export const DIAS_SEMANA_OPCOES = [
+  { valor: 0, label: 'Dom' },
+  { valor: 1, label: 'Seg' },
+  { valor: 2, label: 'Ter' },
+  { valor: 3, label: 'Qua' },
+  { valor: 4, label: 'Qui' },
+  { valor: 5, label: 'Sex' },
+  { valor: 6, label: 'Sáb' },
+] as const
+
+/** Espelha TETO_ENVIOS_POR_EXECUCAO do Edge Function disparo-diario — só informativo aqui, não validado/editável. */
+export const TETO_SEGURANCA_GLOBAL = 15
+
+/** Upload de imagem do disparo — bucket público no Supabase Storage. */
+export const IMAGEM_DISPARO_TIPOS = ['image/jpeg', 'image/png', 'image/webp'] as const
+export const IMAGEM_DISPARO_TAMANHO_MAX_MB = 5
+export const IMAGEM_DISPARO_BUCKET = 'lembretes-imagens'
+export const IMAGEM_DISPARO_API_ROUTE = '/api/disparos/imagem'
 
 /** Rotas internas (same-origin) que fazem proxy para a Evolution API. */
 export const EVOLUTION_STATUS_ROUTE = '/api/evolution/status'
