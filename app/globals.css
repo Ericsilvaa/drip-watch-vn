@@ -142,20 +142,37 @@
 }
 
 @layer components {
-  /* Sombra em duas camadas: contato sutil + halo largo e suave (brief seção 5) */
+  /*
+   * Cards estáticos: elevação suave SEMPRE visível (contato + halo largo),
+   * sem salto no hover. Modern flat cards — o cartão se destaca do fundo
+   * lavanda em repouso, sem depender do mouse.
+   */
   .card-elevated {
     box-shadow:
-      0 1px 2px rgba(19, 63, 198, 0.06),
-      0 12px 32px -12px rgba(19, 63, 198, 0.14);
+      0 1px 1px rgba(16, 24, 40, 0.04),
+      0 8px 20px -8px rgba(19, 63, 198, 0.16),
+      0 24px 48px -24px rgba(19, 63, 198, 0.12);
+  }
+
+  /*
+   * Variante para cards CLICÁVEIS (ex.: template, ação): aí sim um leve
+   * realce no hover faz sentido como sinal de interatividade.
+   */
+  .card-interactive {
+    box-shadow:
+      0 1px 1px rgba(16, 24, 40, 0.04),
+      0 8px 20px -8px rgba(19, 63, 198, 0.16);
     transition:
       box-shadow 0.2s ease,
-      transform 0.2s ease;
+      transform 0.2s ease,
+      border-color 0.2s ease;
   }
-  .card-elevated:hover {
-    transform: translateY(-3px);
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--primary) 35%, transparent);
     box-shadow:
-      0 2px 4px rgba(19, 63, 198, 0.08),
-      0 20px 44px -12px rgba(19, 63, 198, 0.22);
+      0 2px 4px rgba(16, 24, 40, 0.05),
+      0 16px 36px -12px rgba(19, 63, 198, 0.26);
   }
 
   /* Glow radial de fundo em vez de cinza chapado (tom lavanda como referência) */
