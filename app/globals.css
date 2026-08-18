@@ -158,12 +158,28 @@
       0 20px 44px -12px rgba(19, 63, 198, 0.22);
   }
 
-  /* Glow radial de fundo em vez de cinza chapado */
+  /* Glow radial de fundo em vez de cinza chapado (tom lavanda como referência) */
   .app-glow {
     background:
-      radial-gradient(1200px 600px at 12% -8%, rgba(91, 116, 203, 0.14), transparent 60%),
-      radial-gradient(1000px 520px at 100% 0%, rgba(19, 63, 198, 0.1), transparent 55%),
+      radial-gradient(1100px 560px at 8% -10%, rgba(124, 132, 226, 0.18), transparent 58%),
+      radial-gradient(900px 520px at 100% 0%, rgba(19, 63, 198, 0.1), transparent 55%),
+      radial-gradient(1000px 700px at 60% 120%, rgba(91, 116, 203, 0.1), transparent 60%),
       var(--background);
+  }
+
+  /* Item de navegação ativo: preenchimento em gradiente azul da marca */
+  .nav-active {
+    background: linear-gradient(135deg, var(--primary) 0%, #2f57e0 55%, var(--brand-accent) 130%);
+    color: var(--primary-foreground);
+    box-shadow:
+      0 6px 16px -6px rgba(19, 63, 198, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+
+  /* Chip de ícone com leve gradiente para KPIs e marca */
+  .icon-chip {
+    background: linear-gradient(135deg, var(--highlight-bg), #ffffff);
+    border: 1px solid var(--border-muted);
   }
 }
 

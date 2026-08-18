@@ -1,6 +1,9 @@
 "use client"
 
-import { Menu } from "lucide-react"
+import { useState } from "react"
+import { Menu, RefreshCw } from "lucide-react"
+import { useSWRConfig } from "swr"
+import { cn } from "@/lib/utils"
 
 function saudacao(d = new Date()) {
   const h = d.getHours()
@@ -15,16 +18,26 @@ const dataLonga = new Intl.DateTimeFormat("pt-BR", {
   month: "long",
 })
 
+const CHAVES = ["unidades", "clientes", "envios", "importacoes"]
+
 export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const hoje = dataLonga.format(new Date())
+  const { mutate } = useSWRConfig()
+  const [atualizando, setAtualizando] = useState(false)
+
+  async function atualizar() {
+    setAtualizando(true)
+    await Promise.all(CHAVES.map((k) => mutate(k)))
+    setAtualizando(false)
+  }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-border/60 bg-background/70 backdrop-blur-md">
       <div className="flex items-center gap-3 px-4 py-4 lg:px-8">
         <button
           type="button"
           onClick={onOpenMenu}
-          className="rounded-lg border border-border p-2 text-foreground hover:bg-muted lg:hidden"
+          className="rounded-xl border border-border p-2 text-foreground hover:bg-muted lg:hidden"
           aria-label="Abrir menu"
         >
           <Menu className="size-5" />
@@ -46,6 +59,18 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
           </span>
           Dados ao vivo
         </span>
+
+        <button
+          type="button"
+          onClick={atualizar}
+          disabled={atualizando}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground shadow-[0_8px_20px_-8px_rgba(19,63,198,0.6)] transition-all hover:brightness-110 disabled:opacity-70",
+          )}
+        >
+          <RefreshCw className={cn("size-4", atualizando && "animate-spin")} />
+          <span className="hidden sm:inline">{atualizando ? "Atualizando" : "Atualizar"}</span>
+        </button>
       </div>
     </header>
   )
