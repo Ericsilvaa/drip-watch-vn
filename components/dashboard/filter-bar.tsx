@@ -27,7 +27,7 @@ export function FilterBar() {
   } = useDashboardFilters()
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
+    <div className="card-elevated flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
       <div className="flex flex-wrap items-center gap-3">
         {/* Período */}
         <div
