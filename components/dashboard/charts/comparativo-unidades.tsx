@@ -23,7 +23,7 @@ export function ComparativoUnidades() {
             <div
               key={u.id}
               className={cn(
-                "flex flex-col gap-3 rounded-xl border border-border bg-muted/40 p-4 transition-opacity",
+                "flex flex-col gap-3 rounded-2xl border border-border bg-muted/40 p-4 transition-opacity",
                 u.esmaecida && "opacity-45",
               )}
             >

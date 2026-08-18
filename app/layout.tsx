@@ -11,9 +11,9 @@ const jakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Painel de Disparos — Lavateria',
+  title: 'Painel de Disparos — Lavateria Fast',
   description:
-    'Monitoramento dos lembretes de WhatsApp enviados 5 dias após a última compra — unidades Cambeba e Guararapes.',
+    'Monitoramento dos lembretes de WhatsApp enviados 5 dias após a última compra — Lavateria Fast, unidades Cambeba e Guararapes.',
   generator: 'v0.app',
 }
 

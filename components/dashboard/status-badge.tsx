@@ -1,7 +1,7 @@
 import { STATUS_ENVIO, type StatusEnvio } from "@/config/dashboard"
 import { cn } from "@/lib/utils"
 
-const toneClass: Record<string, string> = {
+export const toneClass: Record<string, string> = {
   success: "bg-status-success-bg text-status-success",
   error: "bg-status-error-bg text-status-error",
   neutral: "bg-status-neutral-bg text-status-neutral",

@@ -7,6 +7,7 @@
  */
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 import {
+  ITENS_POR_PAGINA,
   PERIODO_PADRAO,
   type PeriodoKey,
   type UnidadeSlug,
@@ -26,6 +27,7 @@ interface FiltersState {
   setUnidade: (u: UnidadeSlug) => void
   incluirGrupoTeste: boolean
   setIncluirGrupoTeste: (v: boolean) => void
+  itensPorPagina: number
   /** Início do período selecionado (Date). Fim é sempre "agora". */
   inicioPeriodo: Date
   fimPeriodo: Date
@@ -78,6 +80,7 @@ export function DashboardFiltersProvider({ children }: { children: ReactNode }) 
     setUnidade,
     incluirGrupoTeste,
     setIncluirGrupoTeste,
+    itensPorPagina: ITENS_POR_PAGINA,
     inicioPeriodo,
     fimPeriodo,
   }
