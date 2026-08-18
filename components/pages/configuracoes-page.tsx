@@ -5,6 +5,7 @@ import { SectionCard } from "@/components/dashboard/section-card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { EvolutionConnect } from "@/components/configuracoes/evolution-connect"
 import { PreferenciasDashboard } from "@/components/configuracoes/preferencias-dashboard"
+import { INSTANCIAS_EVOLUTION } from "@/config/dashboard"
 
 export function ConfiguracoesPage({ email }: { email: string }) {
   return (
@@ -19,13 +20,12 @@ export function ConfiguracoesPage({ email }: { email: string }) {
           <TabsTrigger value="preferencias">Preferências do painel</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="conexao">
-          <SectionCard
-            title="Evolution API"
-            description="Conecte o número que enviará os disparos via QR Code"
-          >
-            <EvolutionConnect />
-          </SectionCard>
+        <TabsContent value="conexao" className="flex flex-col gap-6">
+          {INSTANCIAS_EVOLUTION.map(({ tipo, titulo, descricao }) => (
+            <SectionCard key={tipo} title={titulo} description={descricao}>
+              <EvolutionConnect tipo={tipo} />
+            </SectionCard>
+          ))}
         </TabsContent>
 
         <TabsContent value="preferencias">

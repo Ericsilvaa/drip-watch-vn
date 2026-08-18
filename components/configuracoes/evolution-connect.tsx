@@ -10,7 +10,7 @@ import {
   EVOLUTION_LOGOUT_ROUTE,
   EVOLUTION_STATUS_ROUTE,
 } from "@/config/dashboard"
-import type { EvolutionState } from "@/lib/types"
+import type { EvolutionState, TipoInstanciaEvolution } from "@/lib/types"
 
 const ROTULOS: Record<EvolutionState, { label: string; tone: string }> = {
   open: { label: "Conectado", tone: "text-status-success" },
@@ -19,7 +19,10 @@ const ROTULOS: Record<EvolutionState, { label: string; tone: string }> = {
   unknown: { label: "Desconhecido", tone: "text-muted-foreground" },
 }
 
-export function EvolutionConnect() {
+export function EvolutionConnect({ tipo }: { tipo: TipoInstanciaEvolution }) {
+  const statusUrl = `${EVOLUTION_STATUS_ROUTE}?tipo=${tipo}`
+  const connectUrl = `${EVOLUTION_CONNECT_ROUTE}?tipo=${tipo}`
+  const logoutUrl = `${EVOLUTION_LOGOUT_ROUTE}?tipo=${tipo}`
   const [estado, setEstado] = useState<EvolutionState>("unknown")
   const [instancia, setInstancia] = useState<string | null>(null)
   const [qr, setQr] = useState<string | null>(null)
@@ -31,7 +34,7 @@ export function EvolutionConnect() {
 
   const consultarStatus = useCallback(async () => {
     try {
-      const res = await fetch(EVOLUTION_STATUS_ROUTE, { cache: "no-store" })
+      const res = await fetch(statusUrl, { cache: "no-store" })
       const data = await res.json()
       if (!res.ok) {
         setErro(data?.error ?? "Falha ao consultar status")
@@ -48,7 +51,7 @@ export function EvolutionConnect() {
     } finally {
       setCarregando(false)
     }
-  }, [])
+  }, [statusUrl])
 
   // status inicial
   useEffect(() => {
@@ -76,7 +79,7 @@ export function EvolutionConnect() {
     setConectando(true)
     setErro(null)
     try {
-      const res = await fetch(EVOLUTION_CONNECT_ROUTE, { method: "POST" })
+      const res = await fetch(connectUrl, { method: "POST" })
       const data = await res.json()
       if (!res.ok) {
         setErro(data?.error ?? "Falha ao gerar QR Code")
@@ -100,7 +103,7 @@ export function EvolutionConnect() {
   async function desconectar() {
     setConectando(true)
     try {
-      const res = await fetch(EVOLUTION_LOGOUT_ROUTE, { method: "POST" })
+      const res = await fetch(logoutUrl, { method: "POST" })
       const data = await res.json()
       if (!res.ok) toast.error(data?.error ?? "Falha ao desconectar")
       else {

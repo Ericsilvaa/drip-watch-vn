@@ -100,3 +100,12 @@ export interface EvolutionStatus {
   /** número/JID conectado, quando disponível */
   number: string | null
 }
+
+/**
+ * A Evolution API tem 2 instâncias reais (ver docs/decisoes/2026-08-16-
+ * instancia-por-grupo-teste.md no repo lavateria-whatsapp-reminder):
+ * "teste" é pra onde clientes com grupo_teste=true são roteados,
+ * "producao" atende as unidades de verdade. O dashboard precisa gerenciar
+ * as duas separadamente — nunca as trata como uma coisa só.
+ */
+export type TipoInstanciaEvolution = 'teste' | 'producao'

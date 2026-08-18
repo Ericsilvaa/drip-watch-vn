@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { connectionState, evolutionConfigurada } from "@/lib/evolution/server"
-import type { Template, TemplateInput } from "@/lib/types"
+import type { Template, TemplateInput, TipoInstanciaEvolution } from "@/lib/types"
 
 const SELECT_COLUNAS =
   "id, unidade_id, nome, horario, dias_semana, dias_apos_compra, ativo, mensagem_template, imagem_url, quantidade_max, criado_em, atualizado_em"
@@ -26,15 +26,34 @@ async function exigirUsuario() {
 }
 
 /**
+ * Qual instância o guard de ativação exige conectada. SEMPRE "producao"
+ * por padrão — é o comportamento real, definitivo. EVOLUTION_GUARD_ATIVACAO
+ * só existe pra validar o mecanismo do guard hoje contra a instância de
+ * teste (que está conectada) sem editar lógica nenhuma: mesmo código,
+ * mesmo caminho, só aponta pra outra instância. Setada pra "teste" no
+ * .env.local por enquanto — REMOVER ou setar pra "producao" antes de
+ * qualquer disparo real ir pro cliente final (ver .env.example).
+ */
+const INSTANCIA_DO_GUARD: TipoInstanciaEvolution =
+  process.env.EVOLUTION_GUARD_ATIVACAO === "teste" ? "teste" : "producao"
+
+/**
  * Mesmo guard de segurança que existia antes de disparos_agendados virar
- * "templates" desconectado: não deixa ativar um disparo sem o WhatsApp de
- * produção conectado, senão o cliente acha que está tudo rodando e nada
- * sai (foi exatamente o que causou o "não disparo" relatado).
+ * "templates" desconectado: não deixa ativar um disparo sem o WhatsApp
+ * (de produção, ver INSTANCIA_DO_GUARD acima) conectado, senão o cliente
+ * acha que está tudo rodando e nada sai (foi exatamente o que causou o
+ * "não disparo" relatado).
+ *
+ * Checa uma instância nomeada explicitamente, nunca "a" instância —
+ * um disparo pode ter clientes com grupo_teste=false (achado 2026-08-18:
+ * antes desta função existir separada por tipo, o guard olhava uma
+ * variável única, que podia estar apontando pra instância de teste e
+ * liberar ativação mesmo com produção desconectada).
  */
 async function whatsappConectado(): Promise<boolean> {
-  if (!evolutionConfigurada()) return false
+  if (!evolutionConfigurada(INSTANCIA_DO_GUARD)) return false
   try {
-    const { state } = await connectionState()
+    const { state } = await connectionState(INSTANCIA_DO_GUARD)
     return state === "open"
   } catch {
     return false
