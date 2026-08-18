@@ -9,16 +9,18 @@ import { createClient } from '@supabase/supabase-js'
  */
 export function createServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  // SUPABASE_SERVICE_ROLE_KEY (nome usado em .env.local) e SUPABASE_SECRET_KEY
-  // (nome que este projeto usa no Vercel — nomenclatura nova do Supabase,
-  // publishable/secret em vez de anon/service_role) são a mesma chave;
-  // aceita os dois pra não depender de qual ambiente está rodando.
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
+  // NUNCA cair pra SUPABASE_SECRET_KEY/SUPABASE_URL (sem NEXT_PUBLIC_) — no
+  // Vercel deste projeto essas vêm de uma integração desconectada, apontando
+  // pra outro projeto Supabase (confirmado em 2026-08-18: "Invalid API key"
+  // ao usar SUPABASE_SECRET_KEY contra NEXT_PUBLIC_SUPABASE_URL). Tem que
+  // ser exatamente esta variável, configurada manualmente com a service_role
+  // key do projeto real (Supabase → Settings → API).
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url) throw new Error('NEXT_PUBLIC_SUPABASE_URL não configurada.')
   if (!serviceKey) {
     throw new Error(
-      'SUPABASE_SERVICE_ROLE_KEY / SUPABASE_SECRET_KEY não configurada. Pegar em Supabase → Settings → API → service_role (ou "secret" na nomenclatura nova) e colar no .env.local (nunca prefixar com NEXT_PUBLIC_).',
+      'SUPABASE_SERVICE_ROLE_KEY não configurada. Pegar em Supabase → Settings → API → service_role e colar no .env.local (nunca prefixar com NEXT_PUBLIC_).',
     )
   }
 
