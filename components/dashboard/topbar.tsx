@@ -6,7 +6,7 @@ import { Menu, RefreshCw } from "lucide-react"
 import { useSWRConfig } from "swr"
 import { cn } from "@/lib/utils"
 
-const CHAVES = ["unidades", "clientes", "envios", "importacoes", "templates"]
+const CHAVES = ["dashboard-data", "unidades", "templates"]
 
 export function Topbar({
   onOpenMenu,

@@ -1,5 +1,3 @@
-"use client"
-
 import { AppShell } from "@/components/dashboard/app-shell"
 import { SectionCard } from "@/components/dashboard/section-card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"

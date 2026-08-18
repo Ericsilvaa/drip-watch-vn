@@ -6,48 +6,27 @@
  * de carregamento/erro — assim cada hook de domínio não repete essa costura.
  */
 import { useMemo } from 'react'
-import {
-  useClientesRaw,
-  useEnviosRaw,
-  useImportacoesRaw,
-  useUnidadesRaw,
-} from '@/hooks/use-raw-data'
+import { useDashboardDataRaw } from '@/hooks/use-raw-data'
 import { useDashboardFilters } from '@/hooks/use-dashboard-filters'
 import { enrichEnvios, resolveUnidadeId } from '@/lib/data/selectors'
 
 export function useDatasets() {
-  const unidadesSWR = useUnidadesRaw()
-  const clientesSWR = useClientesRaw()
-  const enviosSWR = useEnviosRaw()
-  const importacoesSWR = useImportacoesRaw()
+  const { data, isLoading, error } = useDashboardDataRaw()
   const { unidade } = useDashboardFilters()
 
-  const unidades = unidadesSWR.data ?? []
-  const clientes = clientesSWR.data ?? []
-  const importacoes = importacoesSWR.data ?? []
+  const unidades = data?.unidades ?? []
+  const clientes = data?.clientes ?? []
+  const importacoes = data?.importacoes ?? []
 
   const enviosDetalhados = useMemo(
-    () => enrichEnvios(enviosSWR.data ?? [], clientes, unidades),
-    [enviosSWR.data, clientes, unidades],
+    () => enrichEnvios(data?.envios ?? [], clientes, unidades),
+    [data?.envios, clientes, unidades],
   )
 
   const unidadeId = useMemo(
     () => resolveUnidadeId(unidades, unidade),
     [unidades, unidade],
   )
-
-  const isLoading =
-    unidadesSWR.isLoading ||
-    clientesSWR.isLoading ||
-    enviosSWR.isLoading ||
-    importacoesSWR.isLoading
-
-  const error =
-    unidadesSWR.error ||
-    clientesSWR.error ||
-    enviosSWR.error ||
-    importacoesSWR.error ||
-    null
 
   return {
     unidades,
@@ -56,7 +35,7 @@ export function useDatasets() {
     enviosDetalhados,
     unidadeId,
     isLoading,
-    error: error as Error | null,
+    error: (error as Error | undefined) ?? null,
   }
 }
 

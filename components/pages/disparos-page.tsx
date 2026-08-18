@@ -1,5 +1,3 @@
-"use client"
-
 import { DashboardFiltersProvider } from "@/hooks/use-dashboard-filters"
 import { AppShell } from "@/components/dashboard/app-shell"
 import { FilterBar } from "@/components/dashboard/filter-bar"

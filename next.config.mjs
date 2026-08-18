@@ -3,9 +3,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  images: {
-    unoptimized: true,
-  },
   /*
    * O ambiente injeta as chaves do Supabase sem o prefixo NEXT_PUBLIC_
    * (SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY). O cliente do browser precisa das
