@@ -10,8 +10,9 @@ import type { LinhaHistorico } from '@/lib/types'
  * Duas informações a mais que "Envios recentes":
  *  - total de disparos do cliente em TODAS as unidades (mesmo com filtro de
  *    unidade ativo — o valor é justamente o total real, não o recortado);
- *  - marcação "multi-unidade" quando o mesmo cliente (nome/CPF) está cadastrado
- *    em Cambeba e Guararapes.
+ *  - marcação "multi-unidade" quando o mesmo cliente (nome/hash do CPF, ver
+ *    Cliente.identidade_hash em lib/types.ts) está cadastrado em Cambeba e
+ *    Guararapes.
  * Respeita o filtro de unidade e grupo de teste apenas para QUAIS linhas exibir.
  */
 export function useHistoricoDisparos(busca: string) {
@@ -19,19 +20,19 @@ export function useHistoricoDisparos(busca: string) {
   const { enviosDetalhados, clientes, unidadeId, isLoading, error } =
     useDatasets()
 
-  const identidade = (nome: string | null, cpf: string | null) =>
-    (cpf && cpf.trim()) || (nome ? nome.trim().toLowerCase() : '—')
+  const identidade = (nome: string | null, identidadeHash: string | null) =>
+    (identidadeHash && identidadeHash.trim()) || (nome ? nome.trim().toLowerCase() : '—')
 
   const linhas = useMemo<LinhaHistorico[]>(() => {
     // Total de disparos e presença por identidade (todas as unidades, sem filtro)
     const totalPorIdentidade = new Map<string, number>()
     const clienteIdParaIdentidade = new Map<string, string>()
     for (const cl of clientes) {
-      clienteIdParaIdentidade.set(cl.id, identidade(cl.nome, cl.cpf))
+      clienteIdParaIdentidade.set(cl.id, identidade(cl.nome, cl.identidade_hash))
     }
     const unidadesPorIdentidade = new Map<string, Set<string>>()
     for (const cl of clientes) {
-      const key = identidade(cl.nome, cl.cpf)
+      const key = identidade(cl.nome, cl.identidade_hash)
       if (!unidadesPorIdentidade.has(key)) unidadesPorIdentidade.set(key, new Set())
       unidadesPorIdentidade.get(key)!.add(cl.unidade_id)
     }

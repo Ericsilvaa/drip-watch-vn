@@ -10,7 +10,15 @@ export interface Cliente {
   id: string
   unidade_id: string
   nome: string
-  cpf: string | null
+  /**
+   * NÃO é o CPF em texto puro — hash (sha256, 16 chars) calculado no
+   * servidor em fetchClientes (lib/data/queries.ts). Serve só como chave de
+   * agrupamento (mesmo CPF → mesmo hash) pra detectar cliente multi-unidade
+   * em hooks/use-historico-disparos.ts; o CPF real nunca precisa chegar ao
+   * browser pra isso funcionar. Ver docs/decisoes (achado de PII
+   * desnecessária no client em 2026-08-24).
+   */
+  identidade_hash: string | null
   telefone_e164: string | null
   email: string | null
   ultima_compra: string | null
@@ -47,7 +55,6 @@ export interface EnvioDetalhado extends Envio {
   cliente_nome: string
   unidade_nome: string
   cliente_grupo_teste: boolean
-  cliente_cpf: string | null
 }
 
 /** Linha do histórico: envio + total do cliente + flag multi-unidade. */

@@ -10,6 +10,7 @@
  * createServiceClient(), nunca o client do browser — os hooks em
  * hooks/use-raw-data.ts chamam estas funções como fetcher do SWR.
  */
+import { createHash } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import type { Cliente, Envio, Importacao, Unidade } from '@/lib/types'
@@ -37,19 +38,35 @@ export async function fetchUnidades(): Promise<Unidade[]> {
   return assertNoError<Unidade[]>(data as Unidade[], error)
 }
 
+/** sha256 truncado — só precisa ser estável (mesmo cpf → mesmo hash) e não-reversível, não precisa de sal (não é senha). */
+function hashCpf(cpf: string | null): string | null {
+  if (!cpf) return null
+  return createHash('sha256').update(cpf).digest('hex').slice(0, 16)
+}
+
 export async function fetchClientes(): Promise<Cliente[]> {
   await exigirUsuario()
   const supabase = createServiceClient()
   // telefone_e164/email não entram no select: nenhum componente do painel
   // exibe esses campos, então não há razão pra baixar esse PII pro browser.
-  // cpf continua — é usado (só internamente, nunca exibido) pra identificar
-  // o mesmo cliente cadastrado nas duas unidades (marcação "multi-unidade").
+  // cpf é buscado aqui (server-side) só pra virar hash antes de sair desta
+  // função — o CPF em texto puro nunca chega ao browser (ver comentário em
+  // lib/types.ts#Cliente.identidade_hash). O hash serve exatamente pro
+  // mesmo propósito que o CPF cru servia: chave de agrupamento em
+  // hooks/use-historico-disparos.ts pra detectar cliente multi-unidade.
   const { data, error } = await supabase
     .from('clientes')
     .select(
       'id, unidade_id, nome, cpf, ultima_compra, qtd_compras, valor_total, opt_out, opt_out_em, grupo_teste',
     )
-  return assertNoError<Cliente[]>(data as Cliente[], error)
+  const rows = assertNoError<(Cliente & { cpf?: string | null })[]>(
+    data as (Cliente & { cpf?: string | null })[],
+    error,
+  )
+  return rows.map(({ cpf, ...resto }) => ({
+    ...resto,
+    identidade_hash: hashCpf(cpf ?? null),
+  }))
 }
 
 export async function fetchEnvios(): Promise<Envio[]> {

@@ -35,7 +35,6 @@ export function enrichEnvios(
       cliente_nome: c?.nome ?? 'Cliente removido',
       unidade_nome: u?.nome ?? '—',
       cliente_grupo_teste: c?.grupo_teste ?? false,
-      cliente_cpf: c?.cpf ?? null,
     }
   })
 }
