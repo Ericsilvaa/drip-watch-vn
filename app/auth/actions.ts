@@ -15,10 +15,10 @@ export async function signInAction(_prevState: unknown, formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    // Genericamente para evitar enumeração de contas
-    if (error.message.toLowerCase().includes("email not confirmed")) {
-      return { error: "E-mail ainda não confirmado. Verifique sua caixa de entrada." }
-    }
+    // Mensagem sempre genérica, sem exceção — "email not confirmed" tinha uma
+    // mensagem própria antes, mas isso vaza se a conta existe (confirmada ou
+    // não) pra quem estiver testando e-mails. Achado de enumeração de conta,
+    // corrigido em 2026-08-24 (auditoria de segurança).
     return { error: "E-mail ou senha inválidos." }
   }
 
