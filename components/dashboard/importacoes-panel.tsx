@@ -18,7 +18,8 @@ export function ImportacoesPanel() {
     <div className="flex flex-col">
       <NovaImportacaoForm />
 
-      <div className="mb-2 flex justify-end">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="text-xs font-medium text-muted-foreground">Últimas importações</p>
         <ExportCsvButton
           secao="importacoes"
           headers={["arquivo", "unidade", "linhas_lidas", "linhas_validas", "linhas_rejeitadas", "data"]}
