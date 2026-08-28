@@ -24,9 +24,11 @@ function extensaoValida(nome: string): boolean {
 }
 
 /**
- * Painel "Nova importação": aciona o workflow n8n já existente
- * (01-captura-importacao-clientes.json) via /api/importar-clientes — não
- * escreve no Supabase. Ver app/api/importar-clientes/route.ts.
+ * Painel "Nova importação": envia a planilha para /api/importar-clientes,
+ * que faz proxy same-origin para a Edge Function `importar-clientes`
+ * (Supabase). Não escreve no Supabase daqui — validação, normalização de
+ * telefone e gravação em clientes/importacoes acontecem na Edge Function.
+ * Ver app/api/importar-clientes/route.ts.
  */
 export function NovaImportacaoForm() {
   const [unidade, setUnidade] = useState<string>(UNIDADES_IMPORTAVEIS[0]?.nome ?? "")
@@ -75,7 +77,7 @@ export function NovaImportacaoForm() {
       if (inputRef.current) inputRef.current.value = ""
 
       // Best-effort: revalida importacoes/clientes daqui a alguns segundos
-      // pra dar tempo do workflow terminar. Não há garantia de timing —
+      // pra dar tempo da Edge Function terminar. Não há garantia de timing —
       // é só pra poupar o usuário de dar F5 manualmente.
       setTimeout(() => {
         mutate("importacoes")
