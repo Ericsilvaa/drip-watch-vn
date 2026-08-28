@@ -28,22 +28,19 @@ export function DisparosPage({ email }: { email: string }) {
           <RecentTable />
         </SectionCard>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <section className="lg:col-span-2">
-            <SectionCard
-              title="Histórico de disparos"
-              description="Todos os disparos, com total por cliente e marcação multi-unidade"
-            >
-              <HistoricoTable />
-            </SectionCard>
-          </section>
+        <SectionCard
+          title="Importar clientes"
+          description="Envie a planilha da unidade e acompanhe as últimas cargas"
+        >
+          <ImportacoesPanel />
+        </SectionCard>
 
-          <section>
-            <SectionCard title="Importações recentes" description="Cargas de clientes por unidade">
-              <ImportacoesPanel />
-            </SectionCard>
-          </section>
-        </div>
+        <SectionCard
+          title="Histórico de disparos"
+          description="Todos os disparos, com total por cliente e marcação multi-unidade"
+        >
+          <HistoricoTable />
+        </SectionCard>
       </AppShell>
     </DashboardFiltersProvider>
   )
