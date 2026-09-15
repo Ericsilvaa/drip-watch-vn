@@ -171,8 +171,10 @@ export async function excluirTemplate(id: string) {
     // tomar em vez de expor o erro cru do Postgres.
     if (error.code === "23503") {
       return {
-        error:
-          "Esse disparo já tem envios registrados e não pode ser excluído (perderia o histórico). Arquive em vez de excluir — ele some da tela principal sem apagar os envios já feitos, e dá pra desarquivar depois.",
+        error: "Esse disparo já tem envios registrados e não pode ser excluído (perderia o histórico).",
+        // Sinaliza pro toast oferecer o botão "Arquivar" direto na notificação,
+        // em vez do usuário ter que caçar o ícone no card depois de ler o erro.
+        podeArquivar: true as const,
       }
     }
     return { error: error.message }

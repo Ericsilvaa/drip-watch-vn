@@ -93,9 +93,19 @@ export function TemplatesList() {
 
   async function confirmarExclusao() {
     if (!aExcluir) return
-    const res = await excluirTemplate(aExcluir.id)
-    if (res?.error) toast.error(res.error)
-    else toast.success("Template excluído")
+    const alvo = aExcluir
+    const res = await excluirTemplate(alvo.id)
+    if (res?.error) {
+      if ("podeArquivar" in res && res.podeArquivar) {
+        toast.error(res.error, {
+          action: { label: "Arquivar", onClick: () => arquivar(alvo) },
+        })
+      } else {
+        toast.error(res.error)
+      }
+    } else {
+      toast.success("Template excluído")
+    }
     setAExcluir(null)
     await mutate("templates")
     await mutate("templates-arquivados")
