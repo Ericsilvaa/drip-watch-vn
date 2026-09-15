@@ -157,7 +157,20 @@ export async function excluirTemplate(id: string) {
   await exigirUsuario()
   const supabase = createServiceClient()
   const { error } = await supabase.from("disparos_agendados").delete().eq("id", id)
-  if (error) return { error: error.message }
+  if (error) {
+    // 23503 = foreign key violation — disparo já tem envios em `envios`
+    // (envios_disparo_agendado_id_fkey). Excluir apagaria o vínculo com
+    // histórico real de mensagens já mandadas, então o banco recusa por
+    // design (não é bug de schema). Traduz pra ação que o usuário pode
+    // tomar em vez de expor o erro cru do Postgres.
+    if (error.code === "23503") {
+      return {
+        error:
+          "Esse disparo já tem envios registrados e não pode ser excluído (perderia o histórico). Desative em vez de excluir — assim ele para de disparar sem apagar os envios já feitos.",
+      }
+    }
+    return { error: error.message }
+  }
   revalidatePath("/disparos")
   return { ok: true }
 }
