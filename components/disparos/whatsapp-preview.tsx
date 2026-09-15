@@ -64,13 +64,20 @@ function ChatHeader({ device }: { device: Device }) {
   )
 }
 
-/** Moldura de celular com o chat dentro. */
+/**
+ * Moldura de celular com o chat dentro. Proporção real de smartphone
+ * (~9:19.5, igual iPhone/Android atuais) travada via aspect-ratio — a
+ * largura responde ao container (w-full + max-w), a altura é sempre
+ * derivada da largura, nunca do tamanho da mensagem. O conteúdo do chat
+ * rola DENTRO da tela (overflow-y-auto na área de mensagens), como um
+ * celular de verdade — mensagem longa não estica a moldura.
+ */
 function Telefone({ device, corpo, imagemUrl }: { device: Device; corpo: string; imagemUrl?: string | null }) {
   const ios = device === "ios"
   return (
     <div
       className={cn(
-        "relative mx-auto w-[280px] shrink-0 bg-[#111b21] p-2.5 shadow-xl",
+        "relative mx-auto flex aspect-[9/19.5] w-full max-w-[260px] shrink-0 flex-col bg-[#111b21] p-2.5 shadow-xl",
         ios ? "rounded-[2.75rem]" : "rounded-[1.75rem]",
       )}
       aria-label={ios ? "Pré-visualização em iPhone" : "Pré-visualização em Android"}
@@ -84,15 +91,15 @@ function Telefone({ device, corpo, imagemUrl }: { device: Device; corpo: string;
 
       <div
         className={cn(
-          "relative overflow-hidden bg-[#efeae2]",
+          "relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#efeae2]",
           ios ? "rounded-[2.25rem]" : "rounded-[1.25rem]",
         )}
       >
         <ChatHeader device={device} />
 
-        {/* Papel de parede do WhatsApp */}
+        {/* Papel de parede do WhatsApp — rola aqui dentro, não estica o telefone */}
         <div
-          className="min-h-[360px] px-3 py-4"
+          className="min-h-0 flex-1 overflow-y-auto px-3 py-4"
           style={{
             backgroundColor: "#efeae2",
             backgroundImage:
@@ -139,7 +146,7 @@ export function WhatsAppPreview({ corpo, imagemUrl }: { corpo: string; imagemUrl
       </div>
 
       {vazio ? (
-        <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-border bg-secondary/40 px-6 text-center text-sm text-muted-foreground">
+        <div className="mx-auto flex aspect-[9/19.5] w-full max-w-[260px] items-center justify-center rounded-2xl border border-dashed border-border bg-secondary/40 px-6 text-center text-sm text-muted-foreground">
           Comece a escrever a mensagem para ver como ela aparecerá na conversa do WhatsApp.
         </div>
       ) : (
