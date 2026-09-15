@@ -164,7 +164,16 @@ export function TemplateDialog({
               <Label htmlFor="tpl-unidade">Unidade</Label>
               <Select value={unidadeId} onValueChange={(v) => setUnidadeId(v ?? "todas")}>
                 <SelectTrigger id="tpl-unidade">
-                  <SelectValue />
+                  {/*
+                    SelectValue sem children só mostra o label certo depois que o
+                    SelectContent renderizou pelo menos uma vez (registro interno
+                    do Radix) — antes disso cai pro value cru (o UUID aparecia na
+                    tela ao abrir Editar). Computar o label aqui evita depender
+                    desse timing.
+                  */}
+                  <SelectValue>
+                    {unidadeId === "todas" ? "Todas as unidades" : (unidades.find((u) => u.id === unidadeId)?.nome ?? "Unidade removida")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Todas as unidades</SelectItem>
