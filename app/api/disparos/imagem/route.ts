@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/service"
+import { verificarRateLimit } from "@/lib/rate-limit/server"
 import { IMAGEM_DISPARO_BUCKET, IMAGEM_DISPARO_TAMANHO_MAX_MB, IMAGEM_DISPARO_TIPOS } from "@/config/dashboard"
 
 /**
@@ -7,6 +9,10 @@ import { IMAGEM_DISPARO_BUCKET, IMAGEM_DISPARO_TAMANHO_MAX_MB, IMAGEM_DISPARO_TI
  * Storage, leitura pública). Mesmo motivo de sempre passar pelo servidor:
  * nunca escrever com a chave anon do browser — aqui quem grava é o
  * service_role, igual ao resto do CRUD de disparos (app/templates/actions.ts).
+ *
+ * Checagem de sessão explícita aqui (defesa em profundidade, mesmo padrão
+ * de /api/evolution/*) — antes dependia só do middleware (proxy.ts); ver
+ * specs/001-hardening-seguranca (FR-006).
  */
 export const runtime = "nodejs"
 
@@ -17,6 +23,22 @@ function extensaoDe(mime: string): string {
 }
 
 export async function POST(request: Request) {
+  const supabaseAuth = await createClient()
+  const {
+    data: { user },
+  } = await supabaseAuth.auth.getUser()
+  if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+
+  const rateLimit = await verificarRateLimit({
+    escopo: "api:disparos-imagem",
+    identificador: user.id,
+    limite: 20,
+    janelaSegundos: 60,
+  })
+  if (!rateLimit.dentroDoLimite) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: { "Retry-After": "60" } })
+  }
+
   let form: FormData
   try {
     form = await request.formData()

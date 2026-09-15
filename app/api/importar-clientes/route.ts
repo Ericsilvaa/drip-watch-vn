@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
+import { verificarRateLimit } from "@/lib/rate-limit/server"
 import { IMPORT_EXTENSOES, IMPORT_TAMANHO_MAX_MB } from "@/config/dashboard"
 
 /**
  * Proxy same-origin para a Edge Function `importar-clientes` (Supabase).
- * O browser fala só com esta rota (mesma origem, sem CORS, sessão do
- * usuário já validada pelo middleware antes de chegar aqui); é este
+ * O browser fala só com esta rota (mesma origem, sem CORS); é este
  * handler, rodando no servidor, que encaminha pra Edge Function com o
  * trigger secret de baixo privilégio. Não escreve no Supabase diretamente —
  * quem valida, normaliza telefone e grava em `clientes`/`importacoes` é a
  * Edge Function.
+ *
+ * Checagem de sessão explícita aqui (defesa em profundidade, mesmo padrão
+ * de /api/evolution/*) — antes dependia só do middleware (proxy.ts); ver
+ * specs/001-hardening-seguranca (FR-006).
  *
  * Requer SUPABASE_FUNCTIONS_URL e IMPORT_TRIGGER_SECRET (sem prefixo
  * NEXT_PUBLIC_ — nunca deve chegar ao browser).
@@ -21,6 +26,22 @@ function extensaoValida(nomeArquivo: string): boolean {
 }
 
 export async function POST(request: Request) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+
+  const rateLimit = await verificarRateLimit({
+    escopo: "api:importar-clientes",
+    identificador: user.id,
+    limite: 20,
+    janelaSegundos: 60,
+  })
+  if (!rateLimit.dentroDoLimite) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: { "Retry-After": "60" } })
+  }
+
   const functionsUrl = process.env.SUPABASE_FUNCTIONS_URL
   const triggerSecret = process.env.IMPORT_TRIGGER_SECRET
 
