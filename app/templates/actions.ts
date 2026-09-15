@@ -7,7 +7,7 @@ import { connectionState, evolutionConfigurada } from "@/lib/evolution/server"
 import type { Template, TemplateInput, TipoInstanciaEvolution } from "@/lib/types"
 
 const SELECT_COLUNAS =
-  "id, unidade_id, nome, horario, dias_semana, dias_apos_compra, ativo, mensagem_template, imagem_url, quantidade_max, criado_em, atualizado_em"
+  "id, unidade_id, nome, horario, dias_semana, dias_apos_compra, ativo, mensagem_template, imagem_url, quantidade_max, arquivado_em, criado_em, atualizado_em"
 
 /**
  * Só confirma que quem chama está logado no dash (middleware já barra rota
@@ -87,13 +87,19 @@ function validar(input: TemplateInput): string | null {
   return null
 }
 
-export async function listarTemplates(): Promise<Template[]> {
+/**
+ * "visiveis" (default) = tela principal, `arquivado_em is null`.
+ * "arquivados" = só os arquivados, pra tela de gerenciar arquivo.
+ * Arquivar/desarquivar são ações independentes de `ativo` — ver
+ * docs/decisoes/2026-09-15-arquivar-templates-com-historico.md
+ * (lavateria-whatsapp-reminder).
+ */
+export async function listarTemplates(filtro: "visiveis" | "arquivados" = "visiveis"): Promise<Template[]> {
   await exigirUsuario()
   const supabase = createServiceClient()
-  const { data, error } = await supabase
-    .from("disparos_agendados")
-    .select(SELECT_COLUNAS)
-    .order("criado_em", { ascending: false })
+  let query = supabase.from("disparos_agendados").select(SELECT_COLUNAS)
+  query = filtro === "arquivados" ? query.not("arquivado_em", "is", null) : query.is("arquivado_em", null)
+  const { data, error } = await query.order("criado_em", { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []) as Template[]
 }
@@ -166,11 +172,48 @@ export async function excluirTemplate(id: string) {
     if (error.code === "23503") {
       return {
         error:
-          "Esse disparo já tem envios registrados e não pode ser excluído (perderia o histórico). Desative em vez de excluir — assim ele para de disparar sem apagar os envios já feitos.",
+          "Esse disparo já tem envios registrados e não pode ser excluído (perderia o histórico). Arquive em vez de excluir — ele some da tela principal sem apagar os envios já feitos, e dá pra desarquivar depois.",
       }
     }
     return { error: error.message }
   }
+  revalidatePath("/disparos")
+  return { ok: true }
+}
+
+/**
+ * Tira o template da tela principal sem apagar dado nenhum (útil pra quem
+ * já tem `envios` vinculados e não pode ser excluído fisicamente — ver
+ * excluirTemplate acima). Sempre força ativo=false: arquivado nunca
+ * dispara, mesmo se `disparos_devidos_agora`/`disparos_ativos_hoje`
+ * (backend) já filtram arquivado_em is null por conta própria — dupla
+ * garantia, não confiar só no filtro da UI.
+ */
+export async function arquivarTemplate(id: string) {
+  await exigirUsuario()
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from("disparos_agendados")
+    .update({ arquivado_em: new Date().toISOString(), ativo: false })
+    .eq("id", id)
+  if (error) return { error: error.message }
+  revalidatePath("/disparos")
+  return { ok: true }
+}
+
+/**
+ * Volta o template pra tela principal. NÃO reativa sozinho (ativo continua
+ * false) — reativar é decisão separada do usuário, pelo toggle normal, que
+ * já tem o guard de WhatsApp conectado.
+ */
+export async function desarquivarTemplate(id: string) {
+  await exigirUsuario()
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from("disparos_agendados")
+    .update({ arquivado_em: null })
+    .eq("id", id)
+  if (error) return { error: error.message }
   revalidatePath("/disparos")
   return { ok: true }
 }

@@ -34,5 +34,9 @@ export function useImportacoesRaw() {
   return useSWR<Importacao[]>('importacoes', fetchImportacoes, SWR_OPTS)
 }
 export function useTemplatesRaw() {
-  return useSWR<Template[]>('templates', listarTemplates, SWR_OPTS)
+  return useSWR<Template[]>('templates', () => listarTemplates('visiveis'), SWR_OPTS)
+}
+/** Só os arquivados -- usado na aba "Arquivados" de TemplatesList. */
+export function useTemplatesArquivadosRaw() {
+  return useSWR<Template[]>('templates-arquivados', () => listarTemplates('arquivados'), SWR_OPTS)
 }

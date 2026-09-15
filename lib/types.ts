@@ -74,6 +74,8 @@ export interface Template {
   mensagem_template: string | null
   imagem_url: string | null
   quantidade_max: number | null
+  /** null = visível na tela principal. Timestamp = arquivado (independente de `ativo`). */
+  arquivado_em: string | null
   criado_em: string
   atualizado_em: string
 }
