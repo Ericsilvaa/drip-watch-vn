@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useSWRConfig } from "swr"
 import { toast } from "sonner"
-import { Archive, ArchiveRestore, MessageSquareText, Pencil, Plus, Trash2 } from "lucide-react"
+import { Archive, ArchiveRestore, Loader2, MessageSquareText, Pencil, Plus, Trash2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +48,9 @@ export function TemplatesList() {
   const [dialogAberto, setDialogAberto] = useState(false)
   const [emEdicao, setEmEdicao] = useState<Template | null>(null)
   const [aExcluir, setAExcluir] = useState<Template | null>(null)
+  const [arquivandoId, setArquivandoId] = useState<string | null>(null)
+  const [desarquivandoId, setDesarquivandoId] = useState<string | null>(null)
+  const [excluindo, setExcluindo] = useState(false)
 
   function novo() {
     setEmEdicao(null)
@@ -72,43 +75,58 @@ export function TemplatesList() {
   }
 
   async function arquivar(t: Template) {
-    const res = await arquivarTemplate(t.id)
-    if (res?.error) toast.error(res.error)
-    else {
-      toast.success(`"${t.nome}" arquivado`)
-      await mutate("templates")
-      await mutate("templates-arquivados")
+    setArquivandoId(t.id)
+    try {
+      const res = await arquivarTemplate(t.id)
+      if (res?.error) toast.error(res.error)
+      else {
+        toast.success(`"${t.nome}" arquivado`)
+        await mutate("templates")
+        await mutate("templates-arquivados")
+      }
+    } finally {
+      setArquivandoId(null)
     }
   }
 
   async function desarquivar(t: Template) {
-    const res = await desarquivarTemplate(t.id)
-    if (res?.error) toast.error(res.error)
-    else {
-      toast.success(`"${t.nome}" desarquivado`)
-      await mutate("templates")
-      await mutate("templates-arquivados")
+    setDesarquivandoId(t.id)
+    try {
+      const res = await desarquivarTemplate(t.id)
+      if (res?.error) toast.error(res.error)
+      else {
+        toast.success(`"${t.nome}" desarquivado`)
+        await mutate("templates")
+        await mutate("templates-arquivados")
+      }
+    } finally {
+      setDesarquivandoId(null)
     }
   }
 
   async function confirmarExclusao() {
     if (!aExcluir) return
     const alvo = aExcluir
-    const res = await excluirTemplate(alvo.id)
-    if (res?.error) {
-      if ("podeArquivar" in res && res.podeArquivar) {
-        toast.error(res.error, {
-          action: { label: "Arquivar", onClick: () => arquivar(alvo) },
-        })
+    setExcluindo(true)
+    try {
+      const res = await excluirTemplate(alvo.id)
+      if (res?.error) {
+        if ("podeArquivar" in res && res.podeArquivar) {
+          toast.error(res.error, {
+            action: { label: "Arquivar", onClick: () => arquivar(alvo) },
+          })
+        } else {
+          toast.error(res.error)
+        }
       } else {
-        toast.error(res.error)
+        toast.success("Template excluído")
       }
-    } else {
-      toast.success("Template excluído")
+      setAExcluir(null)
+      await mutate("templates")
+      await mutate("templates-arquivados")
+    } finally {
+      setExcluindo(false)
     }
-    setAExcluir(null)
-    await mutate("templates")
-    await mutate("templates-arquivados")
   }
 
   return (
@@ -196,19 +214,29 @@ export function TemplatesList() {
                         variant="ghost"
                         size="icon"
                         onClick={() => arquivar(t)}
+                        disabled={arquivandoId === t.id}
                         aria-label={`Arquivar ${t.nome}`}
                         title="Arquivar (tira da tela principal, mantém o histórico)"
                       >
-                        <Archive className="text-muted-foreground" />
+                        {arquivandoId === t.id ? (
+                          <Loader2 className="animate-spin text-muted-foreground" />
+                        ) : (
+                          <Archive className="text-muted-foreground" />
+                        )}
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setAExcluir(t)}
+                        disabled={excluindo && aExcluir?.id === t.id}
                         aria-label={`Excluir ${t.nome}`}
                         title="Excluir de vez (só funciona se nunca teve envio)"
                       >
-                        <Trash2 className="text-status-error" />
+                        {excluindo && aExcluir?.id === t.id ? (
+                          <Loader2 className="animate-spin text-status-error" />
+                        ) : (
+                          <Trash2 className="text-status-error" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -251,18 +279,32 @@ export function TemplatesList() {
                   </div>
 
                   <div className="mt-auto flex items-center justify-end gap-1 border-t border-border/60 pt-3">
-                    <Button variant="ghost" size="sm" onClick={() => desarquivar(t)}>
-                      <ArchiveRestore data-icon="inline-start" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => desarquivar(t)}
+                      disabled={desarquivandoId === t.id}
+                    >
+                      {desarquivandoId === t.id ? (
+                        <Loader2 data-icon="inline-start" className="animate-spin" />
+                      ) : (
+                        <ArchiveRestore data-icon="inline-start" />
+                      )}
                       Desarquivar
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setAExcluir(t)}
+                      disabled={excluindo && aExcluir?.id === t.id}
                       aria-label={`Excluir ${t.nome}`}
                       title="Excluir de vez (só funciona se nunca teve envio)"
                     >
-                      <Trash2 className="text-status-error" />
+                      {excluindo && aExcluir?.id === t.id ? (
+                        <Loader2 className="animate-spin text-status-error" />
+                      ) : (
+                        <Trash2 className="text-status-error" />
+                      )}
                     </Button>
                   </div>
                 </article>
@@ -281,7 +323,7 @@ export function TemplatesList() {
         />
       )}
 
-      <AlertDialog open={Boolean(aExcluir)} onOpenChange={(v) => !v && setAExcluir(null)}>
+      <AlertDialog open={Boolean(aExcluir)} onOpenChange={(v) => !v && !excluindo && setAExcluir(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir template?</AlertDialogTitle>
@@ -290,8 +332,11 @@ export function TemplatesList() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmarExclusao}>Excluir</AlertDialogAction>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarExclusao} disabled={excluindo}>
+              {excluindo && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              Excluir
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

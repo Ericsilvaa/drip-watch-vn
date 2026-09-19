@@ -1,6 +1,7 @@
 "use client"
 
-import { FileSpreadsheet } from "lucide-react"
+import { useState } from "react"
+import { FileSpreadsheet, Loader2 } from "lucide-react"
 import { useDatasets } from "@/hooks/use-datasets"
 import { fmtDataHora, fmtNumero } from "@/lib/format"
 import { AsyncBoundary } from "@/components/dashboard/state"
@@ -9,6 +10,7 @@ import { NovaImportacaoForm } from "@/components/dashboard/nova-importacao-form"
 
 export function ImportacoesPanel() {
   const { importacoes, unidades, isLoading, error } = useDatasets()
+  const [processando, setProcessando] = useState<{ ativo: boolean; arquivo?: string }>({ ativo: false })
   const unidadeNome = (id: string) => unidades.find((u) => u.id === id)?.nome ?? "—"
   const recentes = [...importacoes]
     .sort((a, b) => new Date(b.importado_em).getTime() - new Date(a.importado_em).getTime())
@@ -16,10 +18,22 @@ export function ImportacoesPanel() {
 
   return (
     <div className="flex flex-col">
-      <NovaImportacaoForm />
+      <NovaImportacaoForm onProcessingChange={setProcessando} />
 
       <div className="mb-2 flex items-center justify-between gap-3">
-        <p className="text-xs font-medium text-muted-foreground">Últimas importações</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-medium text-muted-foreground">Últimas importações</p>
+          {processando.ativo && (
+            <span
+              className="flex items-center gap-1.5 rounded-full bg-highlight-bg px-2 py-0.5 text-[11px] font-medium text-primary"
+              role="status"
+              aria-live="polite"
+            >
+              <Loader2 className="size-3 animate-spin" />
+              Processando{processando.arquivo ? ` "${processando.arquivo}"` : ""}…
+            </span>
+          )}
+        </div>
         <ExportCsvButton
           secao="importacoes"
           headers={["arquivo", "unidade", "linhas_lidas", "linhas_validas", "linhas_rejeitadas", "data"]}

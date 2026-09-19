@@ -176,7 +176,11 @@ export function EvolutionConnect({ tipo }: { tipo: TipoInstanciaEvolution }) {
             </Button>
           ) : (
             <Button variant="outline" onClick={desconectar} disabled={conectando}>
-              <Power data-icon="inline-start" />
+              {conectando ? (
+                <Loader2 data-icon="inline-start" className="animate-spin" />
+              ) : (
+                <Power data-icon="inline-start" />
+              )}
               Desconectar
             </Button>
           )}

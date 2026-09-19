@@ -2,11 +2,27 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { History, LayoutDashboard, LogOut, Send, Settings, X } from "lucide-react"
+import { useFormStatus } from "react-dom"
+import { History, LayoutDashboard, Loader2, LogOut, Send, Settings, X } from "lucide-react"
 import { signOutAction } from "@/app/auth/actions"
 import { Logo } from "@/components/brand/logo"
 import { dashboardConfig } from "@/config/dashboard"
 import { cn } from "@/lib/utils"
+
+function SignOutButton() {
+  const { pending } = useFormStatus()
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-60"
+      aria-label="Sair"
+      title="Sair"
+    >
+      {pending ? <Loader2 className="size-4 animate-spin" /> : <LogOut className="size-4" />}
+    </button>
+  )
+}
 
 export const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -117,14 +133,7 @@ export function Sidebar({
               <p className="text-xs text-muted-foreground">Equipe · leitura</p>
             </div>
             <form action={signOutAction}>
-              <button
-                type="submit"
-                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                aria-label="Sair"
-                title="Sair"
-              >
-                <LogOut className="size-4" />
-              </button>
+              <SignOutButton />
             </form>
           </div>
         </div>
