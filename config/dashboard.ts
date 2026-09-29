@@ -66,7 +66,7 @@ export const ITENS_POR_PAGINA = 10
 export const PLACEHOLDERS = [
   { chave: '{{nome}}', descricao: 'Primeiro nome do cliente', exemplo: 'Ana' },
   { chave: '{{unidade}}', descricao: 'Nome da unidade', exemplo: 'Lavateria Cambeba' },
-  { chave: '{{dias}}', descricao: 'Dias após a compra configurados neste disparo', exemplo: '5' },
+  { chave: '{{dias}}', descricao: 'Dias após a compra configurados neste disparo (só régua — em campanha sai vazio)', exemplo: '5' },
   { chave: '{{dia_semana}}', descricao: 'Dia da semana do envio', exemplo: 'sexta-feira' },
   { chave: '{{hora}}', descricao: 'Horário configurado do disparo', exemplo: '09:00' },
   { chave: '{{data}}', descricao: 'Data do dia do envio', exemplo: '15/08' },
@@ -94,6 +94,16 @@ export const DIAS_SEMANA_OPCOES = [
 
 /** Espelha TETO_ENVIOS_POR_EXECUCAO do Edge Function disparo-diario — só informativo aqui, não validado/editável. */
 export const TETO_SEGURANCA_GLOBAL = 15
+
+/**
+ * Campanha por data — espelha supabase/functions/_shared/envio.ts
+ * (TETO_DIARIO_CAMPANHA_PADRAO) e campanhas_devidas_agora() no repo
+ * lavateria-whatsapp-reminder. Se mudar lá, mudar aqui.
+ */
+export const TETO_DIARIO_CAMPANHA_PADRAO = 60
+/** Primeira e última hora em que uma campanha pode começar (a execução das 19h é a última que envia antes das 20h). */
+export const CAMPANHA_HORA_MIN = 8
+export const CAMPANHA_HORA_MAX = 19
 
 /** Upload de imagem do disparo — bucket público no Supabase Storage. */
 export const IMAGEM_DISPARO_TIPOS = ['image/jpeg', 'image/png', 'image/webp'] as const
