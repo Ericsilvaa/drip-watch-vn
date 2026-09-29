@@ -63,10 +63,28 @@ export interface LinhaHistorico extends EnvioDetalhado {
  * do conceito na UI; os campos têm que bater com a tabela real, senão o
  * CRUD grava algo que o disparo nunca vai ler.
  */
+/**
+ * regua = lembrete de recompra (X dias após a compra, dias da semana).
+ * campanha = envio numa data escolhida pra um público filtrado — ver
+ * docs/prd/EPICO_CAMPANHA_POR_DATA.md no repo lavateria-whatsapp-reminder.
+ */
+export type TipoDisparo = 'regua' | 'campanha'
+
+/** Filtros de público da campanha. null/false = sem filtro. */
+export interface PublicoCampanha {
+  unidade_id: string | null
+  publico_dias_sem_compra_min: number | null
+  publico_dias_sem_compra_max: number | null
+  publico_compras_min: number | null
+  publico_valor_min: number | null
+  publico_aniversariantes_mes: boolean
+}
+
 export interface Template {
   id: string
   unidade_id: string | null
   nome: string
+  tipo: TipoDisparo
   horario: string
   dias_semana: number[]
   dias_apos_compra: number
@@ -74,6 +92,18 @@ export interface Template {
   mensagem_template: string | null
   imagem_url: string | null
   quantidade_max: number | null
+  /** Campanha: primeiro e último dia de envio (YYYY-MM-DD). null na régua. */
+  data_inicio: string | null
+  data_fim: string | null
+  /** Campanha: máximo de envios por dia. null = padrão TETO_DIARIO_CAMPANHA_PADRAO. */
+  teto_diario: number | null
+  publico_dias_sem_compra_min: number | null
+  publico_dias_sem_compra_max: number | null
+  publico_compras_min: number | null
+  publico_valor_min: number | null
+  publico_aniversariantes_mes: boolean
+  /** Campanha: preenchido quando todo o público recebeu ou passou de data_fim. */
+  concluido_em: string | null
   /** null = visível na tela principal. Timestamp = arquivado (independente de `ativo`). */
   arquivado_em: string | null
   criado_em: string
@@ -81,9 +111,9 @@ export interface Template {
 }
 
 /** Payload de criação/edição de disparo. */
-export interface TemplateInput {
+export interface TemplateInput extends PublicoCampanha {
   nome: string
-  unidade_id: string | null
+  tipo: TipoDisparo
   horario: string
   dias_semana: number[]
   dias_apos_compra: number
@@ -91,6 +121,9 @@ export interface TemplateInput {
   mensagem_template: string | null
   imagem_url: string | null
   quantidade_max: number | null
+  data_inicio: string | null
+  data_fim: string | null
+  teto_diario: number | null
 }
 
 /** Estado da conexão com a Evolution API. */

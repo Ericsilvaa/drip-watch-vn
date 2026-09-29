@@ -4,10 +4,49 @@ import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { connectionState, evolutionConfigurada } from "@/lib/evolution/server"
-import type { Template, TemplateInput, TipoInstanciaEvolution } from "@/lib/types"
+import { CAMPANHA_HORA_MAX, CAMPANHA_HORA_MIN } from "@/config/dashboard"
+import type { PublicoCampanha, Template, TemplateInput, TipoInstanciaEvolution } from "@/lib/types"
 
+// Literal único (sem concatenar): o supabase-js infere o tipo do retorno a
+// partir da string exata do select.
 const SELECT_COLUNAS =
-  "id, unidade_id, nome, horario, dias_semana, dias_apos_compra, ativo, mensagem_template, imagem_url, quantidade_max, arquivado_em, criado_em, atualizado_em"
+  "id, unidade_id, nome, tipo, horario, dias_semana, dias_apos_compra, ativo, mensagem_template, imagem_url, quantidade_max, data_inicio, data_fim, teto_diario, publico_dias_sem_compra_min, publico_dias_sem_compra_max, publico_compras_min, publico_valor_min, publico_aniversariantes_mes, concluido_em, arquivado_em, criado_em, atualizado_em"
+
+/** Data de hoje em America/Fortaleza (YYYY-MM-DD) — o mesmo "hoje" que o disparo-diario usa. */
+function hojeFortaleza(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Fortaleza" }).format(new Date())
+}
+
+function inteiroOpcionalInvalido(v: number | null, min: number): boolean {
+  return v !== null && (!Number.isInteger(v) || v < min)
+}
+
+/** Colunas gravadas em disparos_agendados, iguais pra criar e editar. */
+function colunas(input: TemplateInput) {
+  const campanha = input.tipo === "campanha"
+  return {
+    nome: input.nome.trim(),
+    tipo: input.tipo,
+    unidade_id: input.unidade_id,
+    horario: input.horario,
+    // Campanha ignora dias_semana/dias_apos_compra; grava os defaults da
+    // tabela pra linha continuar válida se um dia virar régua.
+    dias_semana: campanha ? [0, 1, 2, 3, 4, 5, 6] : input.dias_semana,
+    dias_apos_compra: campanha ? 5 : input.dias_apos_compra,
+    mensagem_template: input.mensagem_template?.trim() || null,
+    imagem_url: input.imagem_url,
+    quantidade_max: input.quantidade_max,
+    ativo: input.ativo,
+    data_inicio: campanha ? input.data_inicio : null,
+    data_fim: campanha ? input.data_fim || null : null,
+    teto_diario: campanha ? input.teto_diario : null,
+    publico_dias_sem_compra_min: campanha ? input.publico_dias_sem_compra_min : null,
+    publico_dias_sem_compra_max: campanha ? input.publico_dias_sem_compra_max : null,
+    publico_compras_min: campanha ? input.publico_compras_min : null,
+    publico_valor_min: campanha ? input.publico_valor_min : null,
+    publico_aniversariantes_mes: campanha ? input.publico_aniversariantes_mes : false,
+  }
+}
 
 /**
  * Só confirma que quem chama está logado no dash (middleware já barra rota
@@ -60,18 +99,55 @@ async function whatsappConectado(): Promise<boolean> {
   }
 }
 
-function validar(input: TemplateInput): string | null {
+function validarPublico(p: PublicoCampanha): string | null {
+  if (inteiroOpcionalInvalido(p.publico_dias_sem_compra_min, 0) || inteiroOpcionalInvalido(p.publico_dias_sem_compra_max, 0)) {
+    return "Dias sem vir precisa ser um número inteiro (0 ou mais)."
+  }
+  if (
+    p.publico_dias_sem_compra_min !== null &&
+    p.publico_dias_sem_compra_max !== null &&
+    p.publico_dias_sem_compra_max < p.publico_dias_sem_compra_min
+  ) {
+    return "Em \"dias sem vir\", o máximo não pode ser menor que o mínimo."
+  }
+  if (inteiroOpcionalInvalido(p.publico_compras_min, 0)) return "Compras mínimas precisa ser um número inteiro (0 ou mais)."
+  if (p.publico_valor_min !== null && (!Number.isFinite(p.publico_valor_min) || p.publico_valor_min < 0)) {
+    return "Valor gasto mínimo inválido."
+  }
+  return null
+}
+
+function validar(input: TemplateInput, criando: boolean): string | null {
   const nome = input.nome?.trim() ?? ""
   if (nome.length < 2) return "Dê um nome ao disparo (mín. 2 caracteres)."
+  if (input.tipo !== "regua" && input.tipo !== "campanha") return "Tipo de disparo inválido."
 
   if (!/^\d{2}:\d{2}(:\d{2})?$/.test(input.horario ?? "")) return "Horário inválido."
 
-  const diasSemana = Array.isArray(input.dias_semana) ? input.dias_semana : []
-  if (diasSemana.length === 0) return "Selecione ao menos um dia da semana."
-  if (diasSemana.some((d) => !Number.isInteger(d) || d < 0 || d > 6)) return "Dia da semana inválido."
+  if (input.tipo === "regua") {
+    const diasSemana = Array.isArray(input.dias_semana) ? input.dias_semana : []
+    if (diasSemana.length === 0) return "Selecione ao menos um dia da semana."
+    if (diasSemana.some((d) => !Number.isInteger(d) || d < 0 || d > 6)) return "Dia da semana inválido."
 
-  if (!Number.isInteger(input.dias_apos_compra) || input.dias_apos_compra < 1) {
-    return "Dias após a compra precisa ser um número inteiro maior que zero."
+    if (!Number.isInteger(input.dias_apos_compra) || input.dias_apos_compra < 1) {
+      return "Dias após a compra precisa ser um número inteiro maior que zero."
+    }
+  } else {
+    const hora = Number(input.horario.slice(0, 2))
+    if (hora < CAMPANHA_HORA_MIN || hora > CAMPANHA_HORA_MAX) {
+      return `Campanha começa entre ${CAMPANHA_HORA_MIN}h e ${CAMPANHA_HORA_MAX}h (janela comercial de envio).`
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.data_inicio ?? "")) return "Escolha a data da campanha."
+    // Só na criação: editar uma campanha já em andamento não pode travar
+    // porque a data de início ficou no passado.
+    if (criando && input.data_inicio! < hojeFortaleza()) return "A data da campanha não pode estar no passado."
+    if (input.data_fim) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(input.data_fim)) return "Data final inválida."
+      if (input.data_fim < input.data_inicio!) return "A data final não pode ser antes da data de início."
+    }
+    if (inteiroOpcionalInvalido(input.teto_diario, 1)) return "Envios por dia precisa ser um número inteiro maior que zero."
+    const erroPublico = validarPublico(input)
+    if (erroPublico) return erroPublico
   }
 
   const mensagem = input.mensagem_template?.trim() ?? ""
@@ -105,7 +181,7 @@ export async function listarTemplates(filtro: "visiveis" | "arquivados" = "visiv
 }
 
 export async function criarTemplate(input: TemplateInput) {
-  const erro = validar(input)
+  const erro = validar(input, true)
   if (erro) return { error: erro }
   await exigirUsuario()
 
@@ -114,24 +190,14 @@ export async function criarTemplate(input: TemplateInput) {
   }
 
   const supabase = createServiceClient()
-  const { error } = await supabase.from("disparos_agendados").insert({
-    nome: input.nome.trim(),
-    unidade_id: input.unidade_id,
-    horario: input.horario,
-    dias_semana: input.dias_semana,
-    dias_apos_compra: input.dias_apos_compra,
-    mensagem_template: input.mensagem_template?.trim() || null,
-    imagem_url: input.imagem_url,
-    quantidade_max: input.quantidade_max,
-    ativo: input.ativo,
-  })
+  const { error } = await supabase.from("disparos_agendados").insert(colunas(input))
   if (error) return { error: error.message }
   revalidatePath("/disparos")
   return { ok: true }
 }
 
 export async function atualizarTemplate(id: string, input: TemplateInput) {
-  const erro = validar(input)
+  const erro = validar(input, false)
   if (erro) return { error: erro }
   await exigirUsuario()
 
@@ -142,21 +208,37 @@ export async function atualizarTemplate(id: string, input: TemplateInput) {
   const supabase = createServiceClient()
   const { error } = await supabase
     .from("disparos_agendados")
-    .update({
-      nome: input.nome.trim(),
-      unidade_id: input.unidade_id,
-      horario: input.horario,
-      dias_semana: input.dias_semana,
-      dias_apos_compra: input.dias_apos_compra,
-      mensagem_template: input.mensagem_template?.trim() || null,
-      imagem_url: input.imagem_url,
-      quantidade_max: input.quantidade_max,
-      ativo: input.ativo,
-    })
+    // Editar uma campanha concluída reabre: quem já recebeu continua fora
+    // (o banco deduplica por cliente+campanha), só quem entrou pelo filtro
+    // novo ou pela data nova recebe.
+    .update({ ...colunas(input), concluido_em: null })
     .eq("id", id)
   if (error) return { error: error.message }
   revalidatePath("/disparos")
   return { ok: true }
+}
+
+/**
+ * Prévia do form: quantos clientes entram com estes filtros hoje (opt-out e
+ * sem telefone já excluídos). Não considera quem já recebeu a campanha —
+ * é o tamanho do público, pra estimar quantos dias ela leva.
+ */
+export async function previaPublicoCampanha(publico: PublicoCampanha): Promise<{ total: number } | { error: string }> {
+  const erro = validarPublico(publico)
+  if (erro) return { error: erro }
+  await exigirUsuario()
+
+  const supabase = createServiceClient()
+  const { data, error } = await supabase.rpc("contar_publico_campanha", {
+    p_unidade_id: publico.unidade_id,
+    p_dias_sem_compra_min: publico.publico_dias_sem_compra_min,
+    p_dias_sem_compra_max: publico.publico_dias_sem_compra_max,
+    p_compras_min: publico.publico_compras_min,
+    p_valor_min: publico.publico_valor_min,
+    p_aniversariantes_mes: publico.publico_aniversariantes_mes,
+  })
+  if (error) return { error: error.message }
+  return { total: (data as number | null) ?? 0 }
 }
 
 export async function excluirTemplate(id: string) {
@@ -228,6 +310,16 @@ export async function alternarAtivo(id: string, ativo: boolean) {
   }
 
   const supabase = createServiceClient()
+
+  if (ativo) {
+    // Campanha concluída não volta pelo toggle: sem mudar data ou público,
+    // ela seria encerrada de novo na próxima execução. Reabrir é pelo Editar.
+    const { data: atual } = await supabase.from("disparos_agendados").select("concluido_em").eq("id", id).single()
+    if (atual?.concluido_em) {
+      return { error: "Essa campanha já foi concluída. Para reabrir, edite a data ou o público." }
+    }
+  }
+
   const { error } = await supabase.from("disparos_agendados").update({ ativo }).eq("id", id)
   if (error) return { error: error.message }
   revalidatePath("/disparos")

@@ -35,6 +35,25 @@ function resumoDias(dias: number[]): string {
     .join(", ")
 }
 
+/** YYYY-MM-DD → DD/MM */
+function ddmm(data: string): string {
+  return `${data.slice(8, 10)}/${data.slice(5, 7)}`
+}
+
+/** Linha de resumo do card: régua mostra dias/horário/dias após compra; campanha mostra data e janela. */
+function resumoDisparo(t: Template): string {
+  if (t.tipo === "campanha" && t.data_inicio) {
+    const periodo = t.data_fim && t.data_fim !== t.data_inicio ? `${ddmm(t.data_inicio)} a ${ddmm(t.data_fim)}` : ddmm(t.data_inicio)
+    return `Campanha · ${periodo} às ${t.horario.slice(0, 5)}`
+  }
+  return `${resumoDias(t.dias_semana)} às ${t.horario.slice(0, 5)} · ${t.dias_apos_compra} dias após a compra`
+}
+
+function rotuloStatus(t: Template): string {
+  if (t.tipo === "campanha" && t.concluido_em) return "Concluída"
+  return t.ativo ? "Ativo" : "Inativo"
+}
+
 function formatarData(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
@@ -178,13 +197,12 @@ export function TemplatesList() {
                     <div className="min-w-0">
                       <h3 className="truncate text-sm font-semibold text-foreground">{t.nome}</h3>
                       <p className="truncate text-xs text-muted-foreground">
-                        {resumoDias(t.dias_semana)} às {t.horario.slice(0, 5)} · {t.dias_apos_compra} dias após a
-                        compra
+                        {resumoDisparo(t)}
                         {t.quantidade_max ? ` · até ${t.quantidade_max}/rodada` : ""}
                       </p>
                     </div>
                     <Badge variant={t.ativo ? "default" : "secondary"} className="shrink-0">
-                      {t.ativo ? "Ativo" : "Inativo"}
+                      {rotuloStatus(t)}
                     </Badge>
                   </div>
 
@@ -271,7 +289,7 @@ export function TemplatesList() {
                   <div className="min-w-0">
                     <h3 className="truncate text-sm font-semibold text-foreground">{t.nome}</h3>
                     <p className="truncate text-xs text-muted-foreground">
-                      {resumoDias(t.dias_semana)} às {t.horario.slice(0, 5)} · {t.dias_apos_compra} dias após a compra
+                      {resumoDisparo(t)}
                     </p>
                     {t.arquivado_em && (
                       <p className="mt-1 text-xs text-muted-foreground">Arquivado em {formatarData(t.arquivado_em)}</p>
