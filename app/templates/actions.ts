@@ -90,7 +90,7 @@ const INSTANCIA_DO_GUARD: TipoInstanciaEvolution =
  * liberar ativação mesmo com produção desconectada).
  */
 async function whatsappConectado(): Promise<boolean> {
-  if (!evolutionConfigurada(INSTANCIA_DO_GUARD)) return false
+  if (!evolutionConfigurada()) return false
   try {
     const { state } = await connectionState(INSTANCIA_DO_GUARD)
     return state === "open"

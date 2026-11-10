@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { logout, evolutionConfigurada } from "@/lib/evolution/server"
+import { EvolutionErro, logout, evolutionConfigurada } from "@/lib/evolution/server"
 import { verificarRateLimit } from "@/lib/rate-limit/server"
 import type { TipoInstanciaEvolution } from "@/lib/types"
 
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Parâmetro 'tipo' precisa ser 'teste' ou 'producao'." }, { status: 400 })
   }
 
-  if (!evolutionConfigurada(tipo)) {
+  if (!evolutionConfigurada()) {
     return NextResponse.json({ error: "Evolution API não configurada" }, { status: 503 })
   }
 
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Falha ao desconectar" },
-      { status: 502 },
+      { status: e instanceof EvolutionErro ? e.status : 502 },
     )
   }
 }
