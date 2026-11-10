@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { connectionState, evolutionConfigurada, nomeInstancia } from "@/lib/evolution/server"
+import { connectionState, EvolutionErro, evolutionConfigurada } from "@/lib/evolution/server"
 import { verificarRateLimit } from "@/lib/rate-limit/server"
 import type { TipoInstanciaEvolution } from "@/lib/types"
 
@@ -33,17 +33,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Parâmetro 'tipo' precisa ser 'teste' ou 'producao'." }, { status: 400 })
   }
 
-  if (!evolutionConfigurada(tipo)) {
+  if (!evolutionConfigurada()) {
     return NextResponse.json({ error: "Evolution API não configurada" }, { status: 503 })
   }
 
   try {
-    const { state, instance } = await connectionState(tipo)
-    return NextResponse.json({ state, instance, number: null })
+    return NextResponse.json(await connectionState(tipo))
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Falha ao consultar status", instance: nomeInstancia(tipo) },
-      { status: 502 },
+      { error: e instanceof Error ? e.message : "Falha ao consultar status" },
+      { status: e instanceof EvolutionErro ? e.status : 502 },
     )
   }
 }

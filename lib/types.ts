@@ -127,7 +127,7 @@ export interface TemplateInput extends PublicoCampanha {
 }
 
 /** Estado da conexão com a Evolution API. */
-export type EvolutionState = 'open' | 'connecting' | 'close' | 'unknown'
+export type EvolutionState = 'open' | 'connecting' | 'close' | 'inexistente' | 'unknown'
 
 export interface EvolutionStatus {
   state: EvolutionState
