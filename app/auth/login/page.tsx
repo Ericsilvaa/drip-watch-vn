@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { ehDaEquipe } from "@/lib/auth/equipe"
 import { LoginForm } from "@/components/auth/login-form"
 import { Logo } from "@/components/brand/logo"
 import { dashboardConfig } from "@/config/dashboard"
@@ -10,7 +11,8 @@ export default async function LoginPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (user) {
+  const daEquipe = user ? await ehDaEquipe(supabase) : false
+  if (daEquipe) {
     redirect("/")
   }
 
@@ -26,6 +28,15 @@ export default async function LoginPage() {
             <p className="text-sm text-muted-foreground text-pretty">{dashboardConfig.appTagline}</p>
           </div>
         </div>
+
+        {user && (
+          <p
+            className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            role="alert"
+          >
+            A conta {user.email} não tem acesso ao painel. Entre com a conta da equipe ou peça acesso ao Eric.
+          </p>
+        )}
 
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <LoginForm />

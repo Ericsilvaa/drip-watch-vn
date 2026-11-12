@@ -110,7 +110,8 @@ export function TemplateDialog({
   const [comprasMin, setComprasMin] = useState(texto(template?.publico_compras_min))
   const [valorMin, setValorMin] = useState(texto(template?.publico_valor_min))
   const [aniversariantes, setAniversariantes] = useState(template?.publico_aniversariantes_mes ?? false)
-  const [publicoTotal, setPublicoTotal] = useState<number | null>(null)
+  const [publicoContagem, setPublicoContagem] = useState<{ total: number; teste: number } | null>(null)
+  const publicoTotal = publicoContagem?.total ?? null
   const [carregandoPublico, setCarregandoPublico] = useState(false)
   const campanha = tipo === "campanha"
 
@@ -134,7 +135,7 @@ export function TemplateDialog({
       const res = await previaPublicoCampanha(JSON.parse(chavePublico) as PublicoCampanha)
       if (cancelado) return
       setCarregandoPublico(false)
-      setPublicoTotal("total" in res ? res.total : null)
+      setPublicoContagem("total" in res ? res : null)
     }, 400)
     return () => {
       cancelado = true
@@ -344,7 +345,17 @@ export function TemplateDialog({
                     <p className="text-sm font-medium text-foreground">Público</p>
                     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
                       {carregandoPublico ? <Loader2 className="size-3.5 animate-spin" /> : <Users className="size-3.5" />}
-                      {publicoTotal === null ? "—" : `${publicoTotal} cliente(s)`}
+                      {publicoContagem === null ? (
+                        "—"
+                      ) : (
+                        <>
+                          {publicoContagem.total} cliente(s) ·{" "}
+                          <span className={publicoContagem.total - publicoContagem.teste > 0 ? "font-medium text-destructive" : undefined}>
+                            {publicoContagem.total - publicoContagem.teste} real(is)
+                          </span>{" "}
+                          · {publicoContagem.teste} de teste
+                        </>
+                      )}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-3">

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { ehDaEquipe } from "@/lib/auth/equipe"
 import { connectionState, EvolutionErro, evolutionConfigurada } from "@/lib/evolution/server"
 import { verificarRateLimit } from "@/lib/rate-limit/server"
 import type { TipoInstanciaEvolution } from "@/lib/types"
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+  if (!user || !(await ehDaEquipe(supabase))) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
 
   // Limite generoso de propósito: este endpoint é chamado a cada 4s pelo polling
   // de EvolutionConnect enquanto o QR está na tela (~15 req/min legítimo) — ver

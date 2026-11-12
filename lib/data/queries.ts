@@ -11,6 +11,7 @@
  * hooks/use-raw-data.ts chamam estas funções como fetcher do SWR.
  */
 import { createClient } from '@/lib/supabase/server'
+import { ehDaEquipe } from '@/lib/auth/equipe'
 import { createServiceClient } from '@/lib/supabase/service'
 import type { Cliente, Envio, Importacao, Unidade } from '@/lib/types'
 
@@ -19,7 +20,7 @@ async function exigirUsuario() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) throw new Error('Não autorizado')
+  if (!user || !(await ehDaEquipe(supabase))) throw new Error('Não autorizado')
 }
 
 function assertNoError<T>(data: T | null, error: { message: string } | null): T {
