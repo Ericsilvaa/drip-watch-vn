@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { ehDaEquipe } from "@/lib/auth/equipe"
 import { verificarRateLimit } from "@/lib/rate-limit/server"
 import { IMPORT_EXTENSOES, IMPORT_TAMANHO_MAX_MB } from "@/config/dashboard"
 
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+  if (!user || !(await ehDaEquipe(supabase))) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
 
   const rateLimit = await verificarRateLimit({
     escopo: "api:importar-clientes",

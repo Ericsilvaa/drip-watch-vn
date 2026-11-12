@@ -1,3 +1,5 @@
+import { useId } from "react"
+
 /**
  * Mini-gráfico de tendência (7 dias). SVG leve, sem dependência de chart lib —
  * é informação de apoio nos KPIs, não decoração.
@@ -14,6 +16,7 @@ export function Sparkline({
   const width = 96
   const height = 32
   const pad = 2
+  const gradId = `spark-${useId().replace(/:/g, "")}`
 
   if (!data.length || data.every((d) => d === 0)) {
     return (
@@ -44,7 +47,6 @@ export function Sparkline({
 
   const linePath = points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ")
   const areaPath = `${linePath} L${points[points.length - 1][0].toFixed(1)},${height} L${points[0][0].toFixed(1)},${height} Z`
-  const gradId = `spark-${Math.random().toString(36).slice(2, 8)}`
 
   return (
     <svg width={width} height={height} className={className} aria-hidden="true">

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { ehDaEquipe } from "@/lib/auth/equipe"
 import { createServiceClient } from "@/lib/supabase/service"
 import { connectionState, evolutionConfigurada } from "@/lib/evolution/server"
 import { CAMPANHA_HORA_MAX, CAMPANHA_HORA_MIN } from "@/config/dashboard"
@@ -61,7 +62,7 @@ async function exigirUsuario() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) throw new Error("Não autorizado")
+  if (!user || !(await ehDaEquipe(supabase))) throw new Error("Não autorizado")
 }
 
 /**
@@ -223,22 +224,30 @@ export async function atualizarTemplate(id: string, input: TemplateInput) {
  * sem telefone já excluídos). Não considera quem já recebeu a campanha —
  * é o tamanho do público, pra estimar quantos dias ela leva.
  */
-export async function previaPublicoCampanha(publico: PublicoCampanha): Promise<{ total: number } | { error: string }> {
+export async function previaPublicoCampanha(
+  publico: PublicoCampanha,
+): Promise<{ total: number; teste: number } | { error: string }> {
   const erro = validarPublico(publico)
   if (erro) return { error: erro }
   await exigirUsuario()
 
   const supabase = createServiceClient()
-  const { data, error } = await supabase.rpc("contar_publico_campanha", {
-    p_unidade_id: publico.unidade_id,
-    p_dias_sem_compra_min: publico.publico_dias_sem_compra_min,
-    p_dias_sem_compra_max: publico.publico_dias_sem_compra_max,
-    p_compras_min: publico.publico_compras_min,
-    p_valor_min: publico.publico_valor_min,
-    p_aniversariantes_mes: publico.publico_aniversariantes_mes,
-  })
+  // publico_campanha em vez de contar_publico_campanha: a prévia separa
+  // cliente real de grupo de teste, pra ninguém ativar uma campanha "de teste"
+  // sem ver que o filtro pegou a base real.
+  const { data, error } = await supabase
+    .rpc("publico_campanha", {
+      p_unidade_id: publico.unidade_id,
+      p_dias_sem_compra_min: publico.publico_dias_sem_compra_min,
+      p_dias_sem_compra_max: publico.publico_dias_sem_compra_max,
+      p_compras_min: publico.publico_compras_min,
+      p_valor_min: publico.publico_valor_min,
+      p_aniversariantes_mes: publico.publico_aniversariantes_mes,
+    })
+    .select("grupo_teste")
   if (error) return { error: error.message }
-  return { total: (data as number | null) ?? 0 }
+  const linhas = (data ?? []) as { grupo_teste: boolean }[]
+  return { total: linhas.length, teste: linhas.filter((linha) => linha.grupo_teste).length }
 }
 
 export async function excluirTemplate(id: string) {

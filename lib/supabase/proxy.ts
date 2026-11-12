@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { ehDaEquipe } from '@/lib/auth/equipe'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -37,15 +38,20 @@ export async function updateSession(request: NextRequest) {
 
   const isAuthRoute = request.nextUrl.pathname.startsWith('/auth')
 
-  // Todo o painel fica atrás do login: qualquer rota que não seja /auth exige sessão.
-  if (!user && !isAuthRoute) {
+  // Painel só da equipe: sessão de quem não está em public.equipe é tratada
+  // como sem sessão (volta pro login com aviso, sem loop pro "/").
+  const daEquipe = user ? await ehDaEquipe(supabase) : false
+
+  // Todo o painel fica atrás do login: qualquer rota que não seja /auth exige sessão da equipe.
+  if (!daEquipe && !isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
+    if (user) url.searchParams.set('sem_acesso', '1')
     return NextResponse.redirect(url)
   }
 
-  // Usuário logado tentando ver o login: manda pro painel.
-  if (user && request.nextUrl.pathname === '/auth/login') {
+  // Equipe logada tentando ver o login: manda pro painel.
+  if (daEquipe && request.nextUrl.pathname === '/auth/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)

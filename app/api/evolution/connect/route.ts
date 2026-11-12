@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { ehDaEquipe } from "@/lib/auth/equipe"
 import { connect, EvolutionErro, evolutionConfigurada } from "@/lib/evolution/server"
 import { verificarRateLimit } from "@/lib/rate-limit/server"
 import type { TipoInstanciaEvolution } from "@/lib/types"
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+  if (!user || !(await ehDaEquipe(supabase))) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
 
   // Limite generoso de propósito: EvolutionConnect faz polling de /api/evolution/status
   // a cada 4s enquanto o QR está na tela (~15 req/min só disso, legítimo) — ver

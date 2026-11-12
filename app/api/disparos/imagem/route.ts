@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { ehDaEquipe } from "@/lib/auth/equipe"
 import { createServiceClient } from "@/lib/supabase/service"
 import { verificarRateLimit } from "@/lib/rate-limit/server"
 import { IMAGEM_DISPARO_BUCKET, IMAGEM_DISPARO_TAMANHO_MAX_MB, IMAGEM_DISPARO_TIPOS } from "@/config/dashboard"
@@ -16,6 +17,18 @@ import { IMAGEM_DISPARO_BUCKET, IMAGEM_DISPARO_TAMANHO_MAX_MB, IMAGEM_DISPARO_TI
  */
 export const runtime = "nodejs"
 
+/**
+ * Tipo real pelos primeiros bytes. O `type` do File vem do navegador e pode
+ * ser qualquer coisa; a Evolution manda o arquivo pro cliente como imagem.
+ */
+function tipoPelosBytes(bytes: Uint8Array): string | null {
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg"
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png"
+  const ascii = (inicio: number, fim: number) => String.fromCharCode(...bytes.slice(inicio, fim))
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp"
+  return null
+}
+
 function extensaoDe(mime: string): string {
   if (mime === "image/png") return "png"
   if (mime === "image/webp") return "webp"
@@ -27,7 +40,7 @@ export async function POST(request: Request) {
   const {
     data: { user },
   } = await supabaseAuth.auth.getUser()
-  if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+  if (!user || !(await ehDaEquipe(supabaseAuth))) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
 
   const rateLimit = await verificarRateLimit({
     escopo: "api:disparos-imagem",
@@ -59,6 +72,14 @@ export async function POST(request: Request) {
   if (arquivo.size > IMAGEM_DISPARO_TAMANHO_MAX_MB * 1024 * 1024) {
     return NextResponse.json(
       { error: `Imagem maior que ${IMAGEM_DISPARO_TAMANHO_MAX_MB}MB.` },
+      { status: 400 },
+    )
+  }
+
+  const tipoReal = tipoPelosBytes(new Uint8Array(await arquivo.slice(0, 12).arrayBuffer()))
+  if (tipoReal === null || tipoReal !== arquivo.type) {
+    return NextResponse.json(
+      { error: `O arquivo não é uma imagem ${IMAGEM_DISPARO_TIPOS.join(", ")} de verdade.` },
       { status: 400 },
     )
   }
